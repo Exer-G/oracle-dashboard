@@ -1,0 +1,36 @@
+functionsDirectoryOrigin = "config-v1"
+headersOrigin = "config"
+plugins = []
+redirects = []
+
+[build]
+publish = "."
+publishOrigin = "config"
+base = "."
+
+  [build.environment]
+
+  [build.processing]
+
+    [build.processing.css]
+
+    [build.processing.html]
+
+    [build.processing.images]
+
+    [build.processing.js]
+
+  [build.services]
+
+[functions]
+
+  [functions."*"]
+  node_bundler = "esbuild"
+
+[[headers]]
+for = "/api/*"
+
+  [headers.values]
+  Access-Control-Allow-Origin = "*"
+  Access-Control-Allow-Headers = "Content-Type, Authorization"
+  Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"

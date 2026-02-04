@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Professional circular mark with eX - icon only -->
+  <g transform="translate(5, 5)">
+    <!-- Outer circle -->
+    <circle cx="45" cy="45" r="44" fill="#000000"/>
+    <!-- Inner circle -->
+    <circle cx="45" cy="45" r="34" fill="#0077B6"/>
+    <!-- White center -->
+    <circle cx="45" cy="45" r="26" fill="#FFFFFF"/>
+    <!-- eX text -->
+    <text x="45" y="55" font-family="Georgia, serif" font-size="28" font-weight="bold" fill="#000000" text-anchor="middle">eX</text>
+  </g>
+</svg>

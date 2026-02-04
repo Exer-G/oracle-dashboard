@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120">
+  <rect width="400" height="120" fill="#0A0A0A"/>
+  
+  <!-- Professional circular mark with eX -->
+  <g transform="translate(15, 15)">
+    <!-- Outer circle -->
+    <circle cx="45" cy="45" r="42" fill="#FFFFFF"/>
+    <!-- Inner circle -->
+    <circle cx="45" cy="45" r="32" fill="#0077B6"/>
+    <!-- White center -->
+    <circle cx="45" cy="45" r="24" fill="#FFFFFF"/>
+    <!-- eX text -->
+    <text x="45" y="54" font-family="Georgia, serif" font-size="26" font-weight="bold" fill="#000000" text-anchor="middle">eX</text>
+  </g>
+  
+  <text x="120" y="52" font-family="Georgia, serif" font-size="36" font-weight="bold" fill="#FFFFFF">Exergy</text>
+  <text x="120" y="78" font-family="Arial, sans-serif" font-size="16" font-weight="300" letter-spacing="6" fill="#0077B6">DESIGNS</text>
+  <text x="120" y="98" font-family="Georgia, serif" font-size="10" font-style="italic" fill="#888888">Engineering Consultancy</text>
+</svg>

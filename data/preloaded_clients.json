@@ -1,0 +1,122 @@
+[
+  {
+    "id": "1767583962814",
+    "name": "Jason Dispenza",
+    "company": "Edge Energy",
+    "email": "Jason Dispenza <jasond@edge-gogreen.com>",
+    "phone": "888-586-3343",
+    "address": "",
+    "vat_number": "",
+    "currency": "USD",
+    "payment_terms": 7,
+    "created_at": "2026-02-04T02:24:33.410Z"
+  },
+  {
+    "id": "1767647113580",
+    "name": "Amir",
+    "company": "Trulap fitness",
+    "email": "",
+    "phone": "+971 58 555 2995",
+    "address": "",
+    "vat_number": "",
+    "currency": "USD",
+    "payment_terms": 7,
+    "created_at": "2026-02-04T02:24:33.411Z"
+  },
+  {
+    "id": "1767964384021",
+    "name": "Ann Kelly",
+    "company": "Group ABR. SA",
+    "email": "annkelly_b@hotmail.com",
+    "phone": "+1 (514) 654-4784",
+    "address": "",
+    "vat_number": "",
+    "currency": "USD",
+    "payment_terms": 7,
+    "created_at": "2026-02-04T02:24:33.411Z"
+  },
+  {
+    "id": "client_1770171873411_b7rqkof5b",
+    "name": "Aster De Vlack",
+    "company": "Masterworkx bv Vat No: ",
+    "email": "Contact@masterworkx.com",
+    "phone": "+32 472 66 65 89",
+    "address": "Jan Baptiste boterdaelestraat 3 001 gent belgium",
+    "vat_number": "",
+    "currency": "USD",
+    "payment_terms": 7,
+    "created_at": "2026-01-16T08:50:01.460Z"
+  },
+  {
+    "id": "1768555770707",
+    "name": "Justin Eugene Evans",
+    "company": "EvansWerks",
+    "email": "justin.evans@evanswerks.com",
+    "phone": "+1 (505) 803-5305",
+    "address": "",
+    "vat_number": "",
+    "currency": "USD",
+    "payment_terms": 7,
+    "created_at": "2026-01-16T09:29:30.707Z"
+  },
+  {
+    "id": "1768559193225",
+    "name": "Shuaib Badat",
+    "company": "Exergy Designs",
+    "email": "shuaib@exergydesigns.com",
+    "phone": "+27725739937",
+    "address": "",
+    "vat_number": "",
+    "currency": "USD",
+    "payment_terms": 7,
+    "created_at": "2026-01-16T10:26:33.225Z"
+  },
+  {
+    "id": "1768606859003",
+    "name": "Dr Zieg Webber",
+    "company": "Orthoglide",
+    "email": "ziegwebber@gmail.com",
+    "phone": "+27 82 444 7547",
+    "address": "119 Bram Fischer Dr, Ferndale, Randburg, Gauteng, 2194, ZAF",
+    "vat_number": "",
+    "currency": "USD",
+    "payment_terms": 7,
+    "created_at": "2026-01-16T23:40:59.003Z"
+  },
+  {
+    "id": "client_1770171873411_jzndxv959",
+    "name": "Ethan Lai",
+    "company": "Eli Projects",
+    "email": "",
+    "phone": "",
+    "address": "",
+    "vat_number": "",
+    "currency": "USD",
+    "payment_terms": 7,
+    "created_at": "2026-01-28T00:57:58.272Z"
+  },
+  {
+    "id": "1769692042149",
+    "name": "Tim Horlick",
+    "company": "",
+    "email": "",
+    "phone": "",
+    "address": "",
+    "vat_number": "",
+    "currency": "USD",
+    "payment_terms": 7,
+    "created_at": "2026-01-29T13:07:22.149Z"
+  },
+  {
+    "id": "client_1770171873411_jcobluw1k",
+    "name": "Dan Harbut",
+    "company": "American Backflow & Fire Prevention",
+    "email": "+1 (847) 875-1301",
+    "phone": "",
+    "address": "",
+    "vat_number": "",
+    "currency": "USD",
+    "payment_terms": 7,
+    "created_at": "2026-01-29T13:20:39.091Z"
+  }
+]

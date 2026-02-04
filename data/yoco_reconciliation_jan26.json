@@ -1,0 +1,28 @@
+{
+  "period": "January 2026",
+  "yoco_payouts": [
+    {"date": "2026-01-06", "reference": "YOCO LJTTM 060126", "amount": 3983.42, "likely_source": "Unknown - check Yoco dashboard"},
+    {"date": "2026-01-07", "reference": "YOCO LJTTM 070126", "amount": 2010.59, "likely_source": "Unknown - check Yoco dashboard"},
+    {"date": "2026-01-10", "reference": "YOCO LJTTM 26F04109600408", "amount": 34741.55, "likely_source": "Ann Kelly INV-2026-01-143 (R36,469 invoiced, ~5% Yoco fee)"},
+    {"date": "2026-01-12", "reference": "YOCO LJTTM F9D44109600408", "amount": 31931.56, "likely_source": "Ann Kelly INV-2026-01-054 (R33,520 invoiced)"},
+    {"date": "2026-01-14", "reference": "YOCO LJTTM 5A5C23", "amount": 7483.97, "likely_source": "Partial payment or TrueLap?"},
+    {"date": "2026-01-17", "reference": "YOCO LJTTM 0399FE", "amount": 205.85, "likely_source": "Small test payment?"},
+    {"date": "2026-01-19", "reference": "YOCO LJTTM D5FC4109600408", "amount": 41943.52, "likely_source": "Ann Kelly INV-2026-01-757 (R44,030 invoiced)"},
+    {"date": "2026-01-21", "reference": "YOCO LJTTM D8DE4109600408", "amount": 14932.21, "likely_source": "Aster De Vlack INV-2026-01-463 (R15,675 invoiced)"}
+  ],
+  "total_yoco_received": 137232.67,
+  "paid_invoices_jan": [
+    {"invoice": "INV-2026-01-143", "client": "Ann Kelly", "invoiced": 36469.76, "paid_via": "Yoco", "paid_date": "2026-01-09"},
+    {"invoice": "INV-2026-01-054", "client": "Ann Kelly", "invoiced": 33520.00, "paid_via": "Yoco", "paid_date": "2026-01-16"},
+    {"invoice": "INV-2026-01-757", "client": "Ann Kelly", "invoiced": 44030.00, "paid_via": "Yoco", "paid_date": "2026-01-16"},
+    {"invoice": "INV-2026-01-463", "client": "Aster De Vlack", "invoiced": 15675.00, "paid_via": "Yoco", "paid_date": "2026-01-29"},
+    {"invoice": "INV-2026-01-660", "client": "Ethan Lai", "invoiced": 3960.00, "paid_via": "Yoco", "paid_date": "2026-01-29"},
+    {"invoice": "INV-2026-01-556", "client": "Justin Evans", "invoiced": 11262.98, "paid_via": "Wise", "paid_date": "2026-01-29"}
+  ],
+  "unidentified_yoco_payments": [
+    {"date": "2026-01-06", "amount": 3983.42, "notes": "TrueLap / Calway / Other?"},
+    {"date": "2026-01-07", "amount": 2010.59, "notes": "TrueLap / Calway / Other?"},
+    {"date": "2026-01-14", "amount": 7483.97, "notes": "TrueLap / Calway / Other?"}
+  ],
+  "notes": "Yoco takes ~2.6-2.95% processing fee, so payouts are slightly less than invoice amounts. Payouts are batched and may combine multiple payments."
+}

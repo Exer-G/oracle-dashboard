@@ -1,0 +1,17 @@
+node_modules/
+.env
+.env.local
+*.log
+.DS_Store
+.vscode/
+.idea/
+dist/
+build/
+.netlify/
+*.cache
+*.tmp
+backups/
+data/*.csv
+data/api_keys.json
+credentials.json
+token.json

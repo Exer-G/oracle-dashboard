@@ -1,0 +1,9 @@
+{
+  "name": "oracle-dashboard",
+  "version": "2.0.0",
+  "description": "Oracle Business Intelligence Dashboard for Exergy Designs",
+  "scripts": {
+    "build": "echo 'Static site - no build required'"
+  },
+  "private": true
+}

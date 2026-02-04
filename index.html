@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle | Exergy Designs</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23000' rx='15' width='100' height='100'/><text x='50' y='68' font-size='50' font-family='system-ui' font-weight='700' fill='%23fff' text-anchor='middle'>Ex</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="clickup.js"></script>
+    <script src="gdrive.js"></script>
+    <script src="csv-parser.js"></script>
+    <script src="fireflies.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <div class="login-logo"><span>Ex</span></div>
+            <h1>Oracle</h1>
+            <p>Business Intelligence Platform</p>
+            <button class="google-btn" onclick="signInWithGoogle()">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                Continue with Google
+            </button>
+        </div>
+    </div>
+    
+    <!-- Main App -->
+    <div class="app" id="app">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon"><span>Ex</span></div>
+                    <div class="logo-text">
+                        <h1>Oracle</h1>
+                        <span>Exergy Designs</span>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Overview</div>
+                    <a class="nav-item active" data-page="dashboard">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                        Dashboard
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Business</div>
+                    <a class="nav-item" data-page="projects">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        Projects
+                        <span class="nav-badge" id="projectsBadge">0</span>
+                    </a>
+                    <a class="nav-item" data-page="clients">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        Clients
+                        <span class="nav-badge" id="clientsBadge">0</span>
+                    </a>
+                    <a class="nav-item" data-page="invoices">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Invoices
+                        <span class="nav-badge" id="invoicesBadge">0</span>
+                    </a>
+                    <a class="nav-item" data-page="payments">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        Payments
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Finance</div>
+                    <a class="nav-item" data-page="transactions">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        Transactions
+                        <span class="nav-badge" id="txnBadge">0</span>
+                    </a>
+                    <a class="nav-item admin-only" data-page="analyzer" id="analyzerNav" style="display:none;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        Analyzer
+                        <span class="nav-badge admin-badge">PRO</span>
+                    </a>
+                    <a class="nav-item" data-page="upload">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        Upload
+                    </a>
+                    <a class="nav-item admin-only" data-page="scanned" id="scannedNav" style="display:none;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        Scanned Data
+                        <span class="nav-badge" id="scannedBadge">0</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Productivity</div>
+                    <a class="nav-item" data-page="timetracker">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Time Tracker
+                    </a>
+                    <a class="nav-item" data-page="meetings">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        Meetings
+                        <span class="nav-badge" id="meetingsBadge">0</span>
+                    </a>
+                    <a class="nav-item admin-only" data-page="team" id="teamNav" style="display:none;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        Team
+                        <span class="nav-badge" id="teamBadge">6</span>
+                    </a>
+                    <a class="nav-item" data-page="ai">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                        AI Assistant
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">System</div>
+                    <a class="nav-item" data-page="settings">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        Settings
+                    </a>
+                </div>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-card">
+                    <div class="user-avatar" id="userAvatar">SB</div>
+                    <div class="user-info">
+                        <div class="user-name" id="userName">User</div>
+                        <div class="user-email" id="userEmail">-</div>
+                    </div>
+                    <button class="logout-btn" onclick="signOut()" title="Sign Out">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+        
+        <main class="main">
+            <header class="header">
+                <div class="header-left">
+                    <h2 id="pageTitle">Dashboard</h2>
+                    <span id="pageSubtitle">Financial overview</span>
+                </div>
+                <div class="header-actions">
+                    <button class="header-btn" onclick="syncData()" title="Refresh">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    </button>
+                </div>
+            </header>
+            
+            <div class="content">
+                <!-- Dashboard Page -->
+                <section class="page active" id="dashboard">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Revenue</span>
+                                <div class="stat-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                            </div>
+                            <div class="stat-value" id="statIncome">R0</div>
+                            <div class="stat-change positive">This month</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Outstanding</span>
+                                <div class="stat-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                            </div>
+                            <div class="stat-value" id="statOutstanding">R0</div>
+                            <div class="stat-change negative">Unpaid invoices</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Active Projects</span>
+                                <div class="stat-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></div>
+                            </div>
+                            <div class="stat-value" id="statProjects">0</div>
+                            <div class="stat-change positive">In progress</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Hours This Week</span>
+                                <div class="stat-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                            </div>
+                            <div class="stat-value" id="statHours">0h</div>
+                            <div class="stat-change positive">Tracked time</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Time Tracker Widget -->
+                    <div class="time-tracker" id="miniTracker">
+                        <div class="tracker-header">
+                            <h3>⏱ TIME TRACKER</h3>
+                            <div class="tracker-status" id="trackerStatusDisplay">
+                                <span class="dot"></span>
+                                <span id="trackerStatusText">Stopped</span>
+                            </div>
+                        </div>
+                        <div class="tracker-display">
+                            <div class="tracker-time" id="trackerTime">00:00:00</div>
+                            <div class="tracker-project">
+                                <select id="trackerProjectSelect" class="tracker-project-select">
+                                    <option value="">Select Project...</option>
+                                </select>
+                            </div>
+                            <div class="tracker-project" style="margin-top: 8px;">
+                                <input type="text" id="trackerDescInput" placeholder="What are you working on?">
+                            </div>
+                        </div>
+                        <div class="tracker-controls">
+                            <button class="tracker-btn reset" onclick="resetTimer()" title="Reset">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            </button>
+                            <button class="tracker-btn start" id="trackerToggle" onclick="toggleTimer()">
+                                <svg id="playIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <svg id="pauseIcon" style="display:none;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </button>
+                            <button class="tracker-btn reset" onclick="saveTimeEntry()" title="Save Entry">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <div><div class="card-title">Revenue by Project</div><div class="card-subtitle">Current month</div></div>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container"><canvas id="projectChart"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div><div class="card-title">Outstanding Invoices</div></div>
+                                <button class="btn btn-sm btn-secondary" onclick="navigateTo('invoices')">View All</button>
+                            </div>
+                            <div class="card-body flush" id="outstandingInvoices">
+                                <div class="loading"><div class="spinner"></div>Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Projects Page -->
+                <section class="page" id="projects">
+                    <div class="page-actions">
+                        <button class="btn btn-primary" onclick="showProjectModal()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                            New Project
+                        </button>
+                    </div>
+                    <div class="projects-grid" id="projectsGrid">
+                        <div class="loading"><div class="spinner"></div>Loading projects...</div>
+                    </div>
+                </section>
+                
+                <!-- Clients Page -->
+                <section class="page" id="clients">
+                    <div class="page-actions">
+                        <button class="btn btn-primary" onclick="showClientModal()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                            New Client
+                        </button>
+                    </div>
+                    <div class="card">
+                        <div class="card-body flush" id="clientsList">
+                            <div class="loading"><div class="spinner"></div>Loading clients...</div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Invoices Page -->
+                <section class="page" id="invoices">
+                    <div class="page-actions">
+                        <div class="btn-group">
+                            <button class="btn btn-secondary filter-btn active" data-filter="all">All</button>
+                            <button class="btn btn-secondary filter-btn" data-filter="pending">Pending</button>
+                            <button class="btn btn-secondary filter-btn" data-filter="paid">Paid</button>
+                            <button class="btn btn-secondary filter-btn" data-filter="overdue">Overdue</button>
+                        </div>
+                        <button class="btn btn-primary" onclick="showInvoiceModal()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                            New Invoice
+                        </button>
+                    </div>
+                    <div class="card">
+                        <div class="card-body flush" id="invoicesList">
+                            <div class="loading"><div class="spinner"></div>Loading invoices...</div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Payments Page -->
+                <section class="page" id="payments">
+                    <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">Total Received</span></div>
+                            <div class="stat-value" id="statPaymentsTotal">R0</div>
+                            <div class="stat-change positive">All time</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">This Month</span></div>
+                            <div class="stat-value" id="statPaymentsMonth">R0</div>
+                            <div class="stat-change positive">Received</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">Pending</span></div>
+                            <div class="stat-value" id="statPaymentsPending">R0</div>
+                            <div class="stat-change negative">Awaiting</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Payment History</div>
+                        </div>
+                        <div class="card-body flush" id="paymentsList">
+                            <div class="loading"><div class="spinner"></div>Loading payments...</div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Transactions Page -->
+                <section class="page" id="transactions">
+                    <div class="card">
+                        <div class="card-header">
+                            <div><div class="card-title">All Transactions</div><div class="card-subtitle" id="txnCount">0 transactions</div></div>
+                            <button class="btn btn-primary btn-sm" onclick="navigateTo('upload')">Import Data</button>
+                        </div>
+                        <div class="card-body flush" id="allTxns">
+                            <div class="loading"><div class="spinner"></div>Loading...</div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Financial Analyzer Page (Admin Only) -->
+                <section class="page" id="analyzer">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Upwork Gross (USD)</span>
+                                <div class="stat-icon upwork"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                            </div>
+                            <div class="stat-value" id="analyzerUpworkGross">$0</div>
+                            <div class="stat-change positive">Total earnings</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Upwork Net (USD)</span>
+                                <div class="stat-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></div>
+                            </div>
+                            <div class="stat-value" id="analyzerUpworkNet">$0</div>
+                            <div class="stat-change positive">After fees</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Upwork Hours</span>
+                                <div class="stat-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                            </div>
+                            <div class="stat-value" id="analyzerUpworkHours">0h</div>
+                            <div class="stat-change positive">Billable hours</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Fees + VAT (USD)</span>
+                                <div class="stat-icon negative"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg></div>
+                            </div>
+                            <div class="stat-value negative" id="analyzerUpworkFees">$0</div>
+                            <div class="stat-change negative">Upwork + VAT</div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid-2">
+                        <!-- Upwork Revenue by Client -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div><div class="card-title">📊 Upwork Revenue by Client</div><div class="card-subtitle">All time earnings</div></div>
+                            </div>
+                            <div class="card-body flush" id="analyzerClientRevenue">
+                                <div class="loading"><div class="spinner"></div>Loading...</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Monthly Breakdown -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div><div class="card-title">📅 Monthly Revenue</div><div class="card-subtitle">Upwork earnings by month</div></div>
+                            </div>
+                            <div class="card-body flush" id="analyzerMonthlyRevenue">
+                                <div class="loading"><div class="spinner"></div>Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Freelancer Hour Allocations (for freelancer view) -->
+                    <div class="card" id="analyzerAllocationsCard">
+                        <div class="card-header">
+                            <div><div class="card-title">⏱ Project Hour Allocations</div><div class="card-subtitle">Weekly hour limits per project</div></div>
+                            <button class="btn btn-primary btn-sm" onclick="showAllocationModal()">+ Add Allocation</button>
+                        </div>
+                        <div class="card-body flush" id="analyzerAllocations">
+                            <div class="loading"><div class="spinner"></div>Loading...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Upwork Earnings -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div><div class="card-title">💼 Recent Upwork Earnings</div><div class="card-subtitle">Latest transactions</div></div>
+                        </div>
+                        <div class="card-body flush" id="analyzerRecentEarnings">
+                            <div class="loading"><div class="spinner"></div>Loading...</div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Team Page (Admin Only) -->
+                <section class="page" id="team">
+                    <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">Team Members</span></div>
+                            <div class="stat-value" id="teamTotalMembers">0</div>
+                            <div class="stat-change positive">Active</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">Total Capacity</span></div>
+                            <div class="stat-value" id="teamTotalCapacity">0h</div>
+                            <div class="stat-change positive">Per week</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">Allocated Hours</span></div>
+                            <div class="stat-value" id="teamAllocatedHours">0h</div>
+                            <div class="stat-change positive">Assigned</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">Available Hours</span></div>
+                            <div class="stat-value" id="teamAvailableHours">0h</div>
+                            <div class="stat-change positive">Unassigned</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Team Members -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div><div class="card-title">👥 Team Members</div><div class="card-subtitle">Manage your team</div></div>
+                            <button class="btn btn-primary btn-sm" onclick="showTeamMemberModal()">+ Add Member</button>
+                        </div>
+                        <div class="card-body flush" id="teamMembersList">
+                            <div class="loading"><div class="spinner"></div>Loading...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- All Allocations -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div><div class="card-title">📋 Project Allocations</div><div class="card-subtitle">Assign team members to projects</div></div>
+                            <button class="btn btn-primary btn-sm" onclick="showAllocationModal()">+ Add Allocation</button>
+                        </div>
+                        <div class="card-body flush" id="teamAllocationsList">
+                            <div class="loading"><div class="spinner"></div>Loading...</div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Meetings Page (Fireflies Integration) -->
+                <section class="page" id="meetings">
+                    <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">Total Meetings</span></div>
+                            <div class="stat-value" id="meetingsTotal">0</div>
+                            <div class="stat-change positive">All time</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">Client Meetings</span></div>
+                            <div class="stat-value" id="meetingsClient">0</div>
+                            <div class="stat-change positive">External</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">Team Meetings</span></div>
+                            <div class="stat-value" id="meetingsTeam">0</div>
+                            <div class="stat-change positive">Internal</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">Meeting Hours</span></div>
+                            <div class="stat-value" id="meetingsHours">0h</div>
+                            <div class="stat-change positive">Total</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Fireflies Connection -->
+                    <div class="card" id="firefliesConnectionCard">
+                        <div class="card-header">
+                            <div><div class="card-title">🔥 Fireflies.ai Connection</div><div class="card-subtitle">Meeting transcription service</div></div>
+                        </div>
+                        <div class="card-body">
+                            <div id="firefliesStatus" class="status-box error">✗ Not connected</div>
+                            <div class="form-group" style="margin-top: 16px;">
+                                <label class="form-label">Fireflies API Key</label>
+                                <input type="password" class="form-input" id="firefliesApiKey" placeholder="Enter your Fireflies API key">
+                            </div>
+                            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                                <button class="btn btn-primary" id="connectFirefliesBtn">Connect</button>
+                                <button class="btn btn-secondary" id="syncMeetingsBtn">Sync Meetings</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Meeting Type Tabs -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div style="display: flex; gap: 12px;">
+                                <button class="btn btn-sm" id="filterAllMeetings" style="background: #111; color: white;">All</button>
+                                <button class="btn btn-sm btn-secondary" id="filterClientMeetings">👥 Client Meetings</button>
+                                <button class="btn btn-sm btn-secondary" id="filterTeamMeetings">🏢 Team Meetings</button>
+                            </div>
+                            <select class="form-input" id="meetingsClientFilter" style="width: 180px;">
+                                <option value="">Filter by Client</option>
+                            </select>
+                        </div>
+                        <div class="card-body flush" id="meetingsList" style="max-height: 400px; overflow-y: auto;">
+                            <div class="empty-state">
+                                <p>Connect Fireflies.ai to view meeting transcripts and summaries</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Meeting Details Panel -->
+                    <div class="card" id="meetingDetailsCard" style="display: none;">
+                        <div class="card-header">
+                            <div><div class="card-title" id="meetingDetailTitle">Meeting Details</div><div class="card-subtitle" id="meetingDetailDate">-</div></div>
+                            <button class="btn btn-secondary btn-sm" id="closeMeetingDetails">✕ Close</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">Participants</label>
+                                <div id="meetingDetailParticipants" style="font-size: 13px;">-</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Summary</label>
+                                <div id="meetingDetailSummary" style="font-size: 13px; line-height: 1.6; background: var(--grey-50); padding: 12px; border-radius: 6px; max-height: 200px; overflow-y: auto;">-</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Action Items</label>
+                                <div id="meetingDetailActions" style="font-size: 13px;">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Scanned Data Page (Admin Only) -->
+                <section class="page" id="scanned">
+                    <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">Total Scans</span></div>
+                            <div class="stat-value" id="scannedTotal">0</div>
+                            <div class="stat-change positive">All time</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">Pending</span></div>
+                            <div class="stat-value" id="scannedPending">0</div>
+                            <div class="stat-change">Needs review</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">Today</span></div>
+                            <div class="stat-value" id="scannedToday">0</div>
+                            <div class="stat-change positive">Scanned</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">Processed</span></div>
+                            <div class="stat-value" id="scannedProcessed">0</div>
+                            <div class="stat-change positive">Sorted</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Filters -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div><div class="card-title">🔍 Filter Scans</div></div>
+                            <div style="display: flex; gap: 8px;">
+                                <select class="form-input" id="scannedCategoryFilter" onchange="filterScannedData()" style="width: 140px;">
+                                    <option value="">All Categories</option>
+                                    <option value="upwork">💼 Upwork</option>
+                                    <option value="invoice">📄 Invoices</option>
+                                    <option value="bank">🏦 Bank Statements</option>
+                                    <option value="payslip">💰 Pay Slips</option>
+                                    <option value="expense">💸 Expenses</option>
+                                    <option value="project">📁 Projects</option>
+                                </select>
+                                <select class="form-input" id="scannedStatusFilter" onchange="filterScannedData()" style="width: 120px;">
+                                    <option value="">All Status</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="processed">Processed</option>
+                                    <option value="archived">Archived</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Scanned Items List -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div><div class="card-title">📷 Scanned Data</div><div class="card-subtitle">Click to view details and sort</div></div>
+                            <button class="btn btn-primary btn-sm" onclick="syncScannedData()">⟳ Sync</button>
+                        </div>
+                        <div class="card-body flush" id="scannedDataList">
+                            <div class="empty-state">
+                                <p>No scanned data yet.</p>
+                                <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">Install the Oracle Scanner Chrome extension to capture data.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Scan Details Modal -->
+                    <div class="card" id="scanDetailsCard" style="display: none;">
+                        <div class="card-header">
+                            <div><div class="card-title">📋 Scan Details</div><div class="card-subtitle" id="scanDetailsSubtitle">-</div></div>
+                            <button class="btn btn-secondary btn-sm" onclick="closeScanDetails()">✕ Close</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">Category</label>
+                                <select class="form-input" id="scanDetailCategory">
+                                    <option value="upwork">💼 Upwork Earnings</option>
+                                    <option value="invoice">📄 Invoice</option>
+                                    <option value="bank">🏦 Bank Statement</option>
+                                    <option value="payslip">💰 Pay Slip</option>
+                                    <option value="expense">💸 Expense</option>
+                                    <option value="project">📁 Project Data</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Assign to Client/Project</label>
+                                <select class="form-input" id="scanDetailClient">
+                                    <option value="">None</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Notes</label>
+                                <textarea class="form-input" id="scanDetailNotes" rows="3" placeholder="Add notes about this scan..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Extracted Content</label>
+                                <div id="scanDetailContent" style="background: var(--grey-50); padding: 12px; border-radius: 6px; font-size: 12px; font-family: var(--font-mono); max-height: 200px; overflow-y: auto; white-space: pre-wrap;"></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Tables Found</label>
+                                <div id="scanDetailTables" style="overflow-x: auto;"></div>
+                            </div>
+                            <div style="display: flex; gap: 8px; margin-top: 16px;">
+                                <button class="btn btn-primary" onclick="processScan()">✓ Process & Sort</button>
+                                <button class="btn btn-secondary" onclick="archiveScan()">Archive</button>
+                                <button class="btn btn-secondary" onclick="deleteScan()" style="color: var(--danger);">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Upload Page -->
+                <section class="page" id="upload">
+                    <div class="grid-equal">
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">Bank Statement (PDF)</div></div>
+                            <div class="card-body">
+                                <div class="upload-zone" id="pdfZone">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                    <h3>Drop PDF or <span>browse</span></h3>
+                                    <p>AI will extract transactions</p>
+                                    <input type="file" id="pdfInput" accept=".pdf" style="display:none;">
+                                </div>
+                                <div id="pdfStatus" style="margin-top: 16px;"></div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">CSV Data</div></div>
+                            <div class="card-body">
+                                <div class="upload-zone" id="csvZone">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <h3>Drop CSV or <span>browse</span></h3>
+                                    <p>Upwork or bank exports</p>
+                                    <input type="file" id="csvInput" accept=".csv" style="display:none;">
+                                </div>
+                                <div style="margin-top: 16px;">
+                                    <label class="form-label">CSV Type</label>
+                                    <select class="form-input" id="csvType">
+                                        <option value="upwork">Upwork Earnings</option>
+                                        <option value="business">Business Account</option>
+                                        <option value="personal">Personal Account</option>
+                                    </select>
+                                </div>
+                                <div id="csvStatus" style="margin-top: 16px;"></div>
+                                <div style="margin-top: 16px; display: flex; gap: 8px;">
+                                    <button class="btn btn-secondary btn-sm" id="clearTransactionsBtn">Clear All Transactions</button>
+                                    <span id="txnCount" style="font-size: 12px; color: var(--text-secondary); align-self: center;"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Time Tracker Page -->
+                <section class="page" id="timetracker">
+                    <div class="grid-equal">
+                        <div class="time-tracker">
+                            <div class="tracker-header">
+                                <h3>⏱ TIME TRACKER</h3>
+                                <div class="tracker-status" id="trackerStatusDisplay2">
+                                    <span class="dot"></span>
+                                    <span id="trackerStatusText2">Stopped</span>
+                                </div>
+                            </div>
+                            <div class="tracker-display">
+                                <div class="tracker-time" id="trackerTime2">00:00:00</div>
+                                <div class="tracker-project">
+                                    <select id="trackerProjectSelect2" class="tracker-project-select">
+                                        <option value="">Select Project...</option>
+                                    </select>
+                                </div>
+                                <div class="tracker-project" style="margin-top: 8px;">
+                                    <input type="text" id="trackerDescInput2" placeholder="What are you working on?">
+                                </div>
+                            </div>
+                            <div class="tracker-controls">
+                                <button class="tracker-btn reset" onclick="resetTimer()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg></button>
+                                <button class="tracker-btn start" id="trackerToggle2" onclick="toggleTimer()">
+                                    <svg id="playIcon2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <svg id="pauseIcon2" style="display:none;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </button>
+                                <button class="tracker-btn reset" onclick="saveTimeEntry()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></button>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">Today's Summary</div></div>
+                            <div class="card-body">
+                                <div style="text-align: center; padding: 20px 0;">
+                                    <div style="font-family: var(--font-mono); font-size: 36px; font-weight: 600;" id="todayTotal">0h 0m</div>
+                                    <div style="font-size: 13px; color: var(--grey-500); margin-top: 8px;">Total tracked today</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Time Entries</div>
+                            <button class="btn btn-sm btn-secondary" onclick="exportTimeEntries()">Export</button>
+                        </div>
+                        <div class="card-body flush" id="timeEntriesList">
+                            <div class="empty-state"><p>No time entries yet</p></div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- AI Page -->
+                <section class="page" id="ai">
+                    <div class="card" style="height: calc(100vh - 160px);">
+                        <div class="chat-container">
+                            <div class="chat-header">
+                                <div class="chat-avatar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></div>
+                                <div class="chat-info">
+                                    <h3>Oracle AI</h3>
+                                    <div class="chat-status"><span class="dot"></span><span id="aiStatus">Ready</span></div>
+                                </div>
+                                <div style="margin-left: auto; font-size: 10px; color: var(--grey-500);">
+                                    <span id="aiContextInfo">Full access: Financials, Meetings, Team</span>
+                                </div>
+                            </div>
+                            <div class="chat-messages" id="chatMessages">
+                                <div class="chat-message ai">
+                                    <div class="msg-avatar ai"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></div>
+                                    <div class="msg-bubble">Hello! I'm Oracle, your business intelligence assistant. I have access to:<br><br>
+                                    💰 <strong>Financials:</strong> Invoices, payments, Upwork earnings, bank transactions<br>
+                                    📅 <strong>Meetings:</strong> Fireflies transcripts, summaries, action items<br>
+                                    👥 <strong>Team:</strong> Member allocations, project assignments<br>
+                                    📊 <strong>Analytics:</strong> Revenue trends, client profitability<br><br>
+                                    What would you like to know?</div>
+                                </div>
+                            </div>
+                            <div class="chat-suggestions" id="chatSuggestions">
+                                <div class="suggestion" data-query="What are my outstanding invoices and total amount owed?">💰 Outstanding invoices</div>
+                                <div class="suggestion" data-query="Summarize my recent client meetings">📅 Recent meetings</div>
+                                <div class="suggestion" data-query="How much did I earn from Upwork this month?">💼 Upwork earnings</div>
+                                <div class="suggestion" data-query="What action items came from my last team meeting?">📋 Team action items</div>
+                                <div class="suggestion" data-query="Which client has the highest revenue?">📊 Top clients</div>
+                                <div class="suggestion" data-query="Show my bank account summary">🏦 Bank summary</div>
+                            </div>
+                            <div class="chat-input-area">
+                                <div class="chat-input-row">
+                                    <textarea class="chat-input" id="chatInput" placeholder="Ask about finances, meetings, team..." rows="1"></textarea>
+                                    <button class="chat-send" id="chatSendBtn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Settings Page -->
+                <section class="page" id="settings">
+                    <div class="settings-grid">
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">🔑 API Configuration</div></div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">Claude API Key</label>
+                                    <input type="password" class="form-input" id="claudeKey" placeholder="sk-ant-api...">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Yoco API Key</label>
+                                    <input type="password" class="form-input" id="yocoKey" placeholder="sk_live_...">
+                                    <p class="form-hint">For payment links</p>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Wise API Key</label>
+                                    <input type="password" class="form-input" id="wiseKey" placeholder="...">
+                                    <p class="form-hint">For international payments</p>
+                                </div>
+                                <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">📋 ClickUp Integration</div></div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">ClickUp API Token</label>
+                                    <input type="password" class="form-input" id="clickupKey" placeholder="pk_...">
+                                    <p class="form-hint">Get from ClickUp Settings → Apps → API Token</p>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-primary" onclick="connectClickUp()">Connect ClickUp</button>
+                                    <button class="btn btn-secondary" onclick="syncClickUpTeam()">Sync Team</button>
+                                </div>
+                                <div class="status-box" id="clickupStatus" style="margin-top: 12px;">Not connected</div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">🔥 Fireflies Integration</div></div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">Fireflies API Key</label>
+                                    <input type="password" class="form-input" id="firefliesKeySettings" placeholder="...">
+                                    <p class="form-hint">Get from fireflies.ai → Settings → API & Integrations</p>
+                                </div>
+                                <button class="btn btn-primary" onclick="connectFirefliesFromSettings()">Connect Fireflies</button>
+                                <div class="status-box" id="firefliesStatusSettings" style="margin-top: 12px;">Not connected</div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">📁 Google Drive Integration</div></div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">Google OAuth Client ID</label>
+                                    <input type="text" class="form-input" id="gdriveClientId" placeholder="xxx.apps.googleusercontent.com">
+                                    <p class="form-hint">Create at console.cloud.google.com → APIs & Services → Credentials</p>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-primary" onclick="connectGoogleDrive()">Connect Google Drive</button>
+                                    <button class="btn btn-secondary" onclick="browseGoogleDrive()">Browse Files</button>
+                                </div>
+                                <div class="status-box" id="gdriveStatus" style="margin-top: 12px;">Not connected</div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">💰 Invoice Defaults</div></div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">Default Hourly Rate (USD)</label>
+                                    <input type="number" class="form-input" id="defaultRate" value="64">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">USD to ZAR Rate</label>
+                                    <input type="number" class="form-input" id="exchangeRate" value="18.5" step="0.01">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Payment Terms (days)</label>
+                                    <input type="number" class="form-input" id="paymentTerms" value="7">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card" style="margin-top: 20px;">
+                        <div class="card-header"><div class="card-title">🔗 Connection Status</div></div>
+                        <div class="card-body" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                            <div class="status-box success" id="supabaseStatus">✓ Supabase connected</div>
+                            <div class="status-box error" id="claudeStatus">✗ Claude API not configured</div>
+                            <div class="status-box error" id="yocoStatus">✗ Yoco API not configured</div>
+                            <div class="status-box error" id="clickupStatusMain">✗ ClickUp not connected</div>
+                            <div class="status-box error" id="firefliesStatusMain">✗ Fireflies not connected</div>
+                            <div class="status-box error" id="gdriveStatusMain">✗ Google Drive not connected</div>
+                            <div class="status-box error" id="wiseStatus">✗ Wise not configured</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Modals -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+    
+    <!-- Project Modal -->
+    <div class="modal" id="projectModal">
+        <div class="modal-header">
+            <h3 id="projectModalTitle">New Project</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="projectId">
+            <div class="form-group">
+                <label class="form-label">Project Name *</label>
+                <input type="text" class="form-input" id="projectName" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Client</label>
+                    <select class="form-input" id="projectClient"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select class="form-input" id="projectStatus">
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                        <option value="paused">Paused</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Hourly Rate (USD)</label>
+                    <input type="number" class="form-input" id="projectRate" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Source</label>
+                    <select class="form-input" id="projectSource">
+                        <option value="direct">Direct</option>
+                        <option value="upwork">Upwork</option>
+                        <option value="referral">Referral</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea class="form-input" id="projectDesc" rows="3"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveProject()">Save Project</button>
+        </div>
+    </div>
+    
+    <!-- Client Modal -->
+    <div class="modal" id="clientModal">
+        <div class="modal-header">
+            <h3 id="clientModalTitle">New Client</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="clientId">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Name *</label>
+                    <input type="text" class="form-input" id="clientName" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Company</label>
+                    <input type="text" class="form-input" id="clientCompany">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="clientEmail">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input type="text" class="form-input" id="clientPhone">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Address</label>
+                <textarea class="form-input" id="clientAddress" rows="2"></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Currency</label>
+                    <select class="form-input" id="clientCurrency">
+                        <option value="USD">USD</option>
+                        <option value="ZAR">ZAR</option>
+                        <option value="EUR">EUR</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Payment Terms (days)</label>
+                    <input type="number" class="form-input" id="clientTerms" value="7">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveClient()">Save Client</button>
+        </div>
+    </div>
+    
+    <!-- Invoice Modal -->
+    <div class="modal modal-lg" id="invoiceModal">
+        <div class="modal-header">
+            <h3 id="invoiceModalTitle">New Invoice</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="invoiceId">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Invoice Number</label>
+                    <input type="text" class="form-input" id="invoiceNumber" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-input" id="invoiceDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Due Date</label>
+                    <input type="date" class="form-input" id="invoiceDueDate">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Client *</label>
+                    <select class="form-input" id="invoiceClient" required></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Project</label>
+                    <select class="form-input" id="invoiceProject"></select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Currency</label>
+                    <select class="form-input" id="invoiceCurrency">
+                        <option value="USD">USD</option>
+                        <option value="ZAR">ZAR</option>
+                        <option value="EUR">EUR</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Exchange Rate</label>
+                    <input type="number" class="form-input" id="invoiceExchangeRate" value="18.5" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Payment Method</label>
+                    <select class="form-input" id="invoicePaymentMethod">
+                        <option value="yoco">Yoco</option>
+                        <option value="wise">Wise</option>
+                        <option value="bank">Bank Transfer</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Line Items</label>
+                <div id="lineItemsContainer"></div>
+                <button class="btn btn-secondary btn-sm" onclick="addLineItem()" style="margin-top: 8px;">+ Add Item</button>
+            </div>
+            <div class="form-row" style="margin-top: 16px;">
+                <div class="form-group">
+                    <label class="form-label">Subtotal</label>
+                    <input type="text" class="form-input" id="invoiceSubtotal" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">ZAR Total</label>
+                    <input type="text" class="form-input" id="invoiceZarTotal" readonly>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Remarks</label>
+                <textarea class="form-input" id="invoiceRemarks" rows="2"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveInvoice()">Save Invoice</button>
+        </div>
+    </div>
+    
+    <!-- Allocation Modal -->
+    <div class="modal" id="allocationModal">
+        <div class="modal-header">
+            <h3 id="allocationModalTitle">New Allocation</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="allocationId">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Team Member *</label>
+                    <select class="form-input" id="allocationMember" required></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Project *</label>
+                    <select class="form-input" id="allocationProject" required></select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Hours Per Week *</label>
+                    <input type="number" class="form-input" id="allocationHours" min="1" max="40" value="10" step="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Hourly Rate</label>
+                    <input type="number" class="form-input" id="allocationRate" step="0.01">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Currency</label>
+                    <select class="form-input" id="allocationCurrency">
+                        <option value="USD">USD</option>
+                        <option value="ZAR">ZAR</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select class="form-input" id="allocationStatus">
+                        <option value="active">Active</option>
+                        <option value="paused">Paused</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveAllocation()">Save Allocation</button>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toasts"></div>
+
+    <!-- Preloaded financial data -->
+    <script src="data-loader.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

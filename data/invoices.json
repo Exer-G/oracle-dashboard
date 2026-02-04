@@ -1,0 +1,643 @@
+[
+  {
+    "id": 1769692839091,
+    "invoiceNumber": "INV-2026-01-236",
+    "date": "2026-01-29",
+    "dueDate": "2026-01-30",
+    "paymentTerms": "3 days",
+    "client": {
+      "name": "Dan Harbut",
+      "company": "American Backflow & Fire Prevention",
+      "address": "",
+      "phone": "",
+      "email": "+1 (847) 875-1301",
+      "vat": "",
+      "id": 1769692839091
+    },
+    "clientId": 1769692839091,
+    "lineItems": [
+      {
+        "id": 1,
+        "description": "New tube sealing system with ring pressure orifice design (Monday)",
+        "qty": "6",
+        "unitPrice": "58",
+        "isHours": true
+      },
+      {
+        "id": 1769692447924,
+        "description": "Flow dynamics on check valves to verify spring tension  (Wednesday)",
+        "qty": "3",
+        "unitPrice": "58",
+        "isHours": true
+      },
+      {
+        "id": 1769692505389,
+        "description": "Adapter flow tests for 1/2  and 3/8 fittings on new setup (Tuesday)",
+        "qty": "5",
+        "unitPrice": "58",
+        "isHours": true
+      },
+      {
+        "id": 1769692560760,
+        "description": "Design adjustments for printability on check valves (Thursday)",
+        "qty": "2",
+        "unitPrice": "58",
+        "isHours": true
+      },
+      {
+        "id": 1769692726824,
+        "description": "Adjustments to ball valves for new main valve body (Wednesday)",
+        "qty": "2",
+        "unitPrice": "58",
+        "isHours": true
+      }
+    ],
+    "currency": "USD",
+    "exchangeRate": "16",
+    "subtotal": 1044,
+    "zarTotal": 16704,
+    "remarks": "",
+    "paymentLink": "https://pay.yoco.com/r/mzparw",
+    "paymentMethod": "yoco",
+    "createdAt": "2026-01-29T13:20:39.091Z",
+    "status": "pending",
+    "updatedAt": "2026-01-29T13:21:05.814Z"
+  },
+  {
+    "id": 1769691955312,
+    "invoiceNumber": "INV-2026-01-601",
+    "date": "2026-01-29",
+    "paymentTerms": "7 days",
+    "client": {
+      "id": null,
+      "name": "Aster De Vlack",
+      "company": "Masterworkx bv Vat No: ",
+      "email": "Contact@masterworkx.com",
+      "phone": "+32 472 66 65 89",
+      "address": "Jan Baptiste boterdaelestraat 3 001 gent belgium",
+      "vat": "",
+      "createdAt": "2026-01-16T08:50:01.460Z"
+    },
+    "clientId": null,
+    "lineItems": [
+      {
+        "id": 1,
+        "description": "Engineering services",
+        "qty": "12.67",
+        "unitPrice": "75",
+        "isHours": true
+      }
+    ],
+    "currency": "USD",
+    "exchangeRate": "16",
+    "subtotal": 950.25,
+    "remarks": "",
+    "paymentMethod": "yoco",
+    "status": "pending",
+    "createdAt": "2026-01-29T13:05:55.312Z",
+    "zarTotal": 15204,
+    "dueDate": "",
+    "paymentLink": "",
+    "updatedAt": "2026-01-29T13:07:13.337Z"
+  },
+  {
+    "id": 1769691939904,
+    "invoiceNumber": "INV-2026-01-618",
+    "date": "2026-01-29",
+    "paymentTerms": "7 days",
+    "client": {
+      "name": "Tim Horlick"
+    },
+    "lineItems": [
+      {
+        "id": 1,
+        "description": "Engineering services",
+        "qty": "21.33",
+        "unitPrice": "75",
+        "isHours": true
+      }
+    ],
+    "currency": "USD",
+    "exchangeRate": "16",
+    "subtotal": 1599.7499999999998,
+    "remarks": "",
+    "paymentMethod": "yoco",
+    "status": "pending",
+    "createdAt": "2026-01-29T13:05:39.904Z",
+    "zarTotal": 25595.999999999996,
+    "dueDate": "",
+    "paymentLink": "",
+    "updatedAt": "2026-01-29T13:07:22.149Z"
+  },
+  {
+    "id": 1769691924494,
+    "invoiceNumber": "INV-2026-01-628",
+    "date": "2026-01-29",
+    "paymentTerms": "7 days",
+    "client": {
+      "name": "Justin Eugene Evans",
+      "company": "EvansWerks",
+      "address": "",
+      "phone": "+1 (505) 803-5305",
+      "email": "justin.evans@evanswerks.com",
+      "vat": "",
+      "id": 1768555770707,
+      "createdAt": "2026-01-16T09:29:30.707Z"
+    },
+    "clientId": 1768555770707,
+    "lineItems": [
+      {
+        "id": 1,
+        "description": "Engineering services",
+        "qty": "1",
+        "unitPrice": "4000",
+        "isHours": false
+      }
+    ],
+    "currency": "USD",
+    "exchangeRate": "16",
+    "subtotal": 4000,
+    "remarks": "",
+    "paymentMethod": "yoco",
+    "status": "pending",
+    "createdAt": "2026-01-29T13:05:24.494Z",
+    "zarTotal": 64000,
+    "dueDate": "",
+    "paymentLink": "",
+    "updatedAt": "2026-01-29T13:07:29.094Z"
+  },
+  {
+    "id": 1769561878273,
+    "invoiceNumber": "INV-2026-01-660",
+    "date": "2026-01-28",
+    "dueDate": "",
+    "paymentTerms": "3 days",
+    "client": {
+      "name": "Ethan Lai",
+      "company": "Eli Projects",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "vat": "",
+      "id": 1769561878272
+    },
+    "clientId": 1769561878272,
+    "lineItems": [
+      {
+        "id": 1,
+        "description": "Development of 2D impact heatmaps control vs damped ",
+        "qty": "6",
+        "unitPrice": "40",
+        "isHours": true
+      }
+    ],
+    "currency": "USD",
+    "exchangeRate": "16.5",
+    "subtotal": 240,
+    "zarTotal": 3960,
+    "remarks": "",
+    "paymentLink": "https://pay.yoco.com/r/4gwlGg",
+    "paymentMethod": "yoco",
+    "createdAt": "2026-01-28T00:57:58.273Z",
+    "status": "paid",
+    "updatedAt": "2026-01-28T00:58:14.600Z",
+    "paidAt": "2026-01-29T13:03:42.062Z"
+  },
+  {
+    "id": 1768607028058,
+    "invoiceNumber": "INV-2026-01-198",
+    "date": "2026-01-16",
+    "paymentTerms": "7 days",
+    "client": {
+      "id": 1768606859003,
+      "name": "Dr Zieg Webber",
+      "company": "Orthoglide",
+      "email": "ziegwebber@gmail.com",
+      "phone": "+27 82 444 7547",
+      "address": "119 Bram Fischer Dr, Ferndale, Randburg, Gauteng, 2194, ZAF",
+      "vat": "",
+      "createdAt": "2026-01-16T23:40:59.003Z"
+    },
+    "clientId": 1768606859003,
+    "lineItems": [
+      {
+        "id": 1,
+        "description": "Ortho Glide  brackets",
+        "qty": "40",
+        "unitPrice": "750",
+        "isHours": false
+      },
+      {
+        "id": 1768607037919,
+        "description": "Orho glide reduced deep tunnel test batch",
+        "qty": "2",
+        "unitPrice": "1100",
+        "isHours": false
+      },
+      {
+        "id": 1768607072314,
+        "description": "Tube Align Adjustment for Tweezer grip",
+        "qty": "0.5",
+        "unitPrice": "400",
+        "isHours": false
+      },
+      {
+        "id": 1768607078799,
+        "description": "Tube Align batch",
+        "qty": "20",
+        "unitPrice": "250",
+        "isHours": false
+      }
+    ],
+    "currency": "ZAR",
+    "exchangeRate": "16",
+    "subtotal": 37400,
+    "remarks": "Orthoglide bracket test ETA: Tuesday 20/01/2026\nOrthoglide bracket Batch ETA: Monday 26/01/2026\nTube Align bracket Batch ETA: Thursday 22/01/2028",
+    "paymentMethod": "yoco",
+    "status": "pending",
+    "createdAt": "2026-01-16T23:43:48.058Z",
+    "zarTotal": 37400,
+    "dueDate": "",
+    "paymentLink": "https://c.yoco.com/checkout/ch_DLzAZVpkne9iJjXH1ZJtz7xa",
+    "updatedAt": "2026-01-29T13:07:37.089Z"
+  },
+  {
+    "id": 1768606651179,
+    "invoiceNumber": "INV-2026-01-463",
+    "date": "2026-01-16",
+    "paymentTerms": "7 days",
+    "client": {
+      "name": "Aster De Vlack",
+      "company": "Masterworkx bv Vat No: ",
+      "address": "Jan Baptiste boterdaelestraat 3 001 gent belgium",
+      "phone": "+32 472 66 65 89",
+      "email": "Contact@masterworkx.com",
+      "vat": "",
+      "id": null
+    },
+    "clientId": null,
+    "lineItems": [
+      {
+        "id": 1,
+        "description": "First part of file submission, Gavin up to H10",
+        "qty": "1",
+        "unitPrice": "950",
+        "isHours": false
+      }
+    ],
+    "currency": "USD",
+    "exchangeRate": "16.5",
+    "subtotal": 950,
+    "remarks": "Due on Monday",
+    "paymentMethod": "yoco",
+    "status": "paid",
+    "createdAt": "2026-01-16T23:37:31.179Z",
+    "zarTotal": 15675,
+    "dueDate": "",
+    "paymentLink": "https://pay.yoco.com/r/mR6oWO",
+    "updatedAt": "2026-01-29T13:04:55.293Z",
+    "paidAt": "2026-01-29T13:06:15.122Z"
+  },
+  {
+    "id": 1768599155806,
+    "invoiceNumber": "INV-2026-01-105",
+    "date": "2026-01-16",
+    "dueDate": "",
+    "paymentTerms": "3 days",
+    "client": {
+      "name": "Ann Kelly",
+      "company": "Group ABR. SA",
+      "address": "",
+      "phone": "+1 (514) 654-4784",
+      "email": "annkelly_b@hotmail.com",
+      "vat": "",
+      "id": 1767964384021
+    },
+    "clientId": 1767964384021,
+    "lineItems": [
+      {
+        "id": 1,
+        "description": "Credit for USD conversion error ",
+        "qty": "1",
+        "unitPrice": "-300",
+        "isHours": false
+      },
+      {
+        "id": 1769554392280,
+        "description": "engineering design",
+        "qty": "30",
+        "unitPrice": "64",
+        "isHours": true
+      }
+    ],
+    "currency": "USD",
+    "exchangeRate": "16.5",
+    "subtotal": 1620,
+    "zarTotal": 26730,
+    "remarks": "",
+    "paymentLink": "https://pay.yoco.com/r/2QzZOv",
+    "paymentMethod": "yoco",
+    "createdAt": "2026-01-16T21:32:35.806Z",
+    "status": "pending",
+    "updatedAt": "2026-01-29T13:07:47.012Z"
+  },
+  {
+    "id": 1768560674035,
+    "invoiceNumber": "INV-2026-01-175",
+    "date": "2026-01-16",
+    "paymentTerms": "7 days",
+    "client": {
+      "name": "Shuaib Badat",
+      "company": "Exergy Designs",
+      "address": "",
+      "phone": "+27725739937",
+      "email": "shuaib@exergydesigns.com",
+      "vat": "",
+      "id": 1768559193225,
+      "createdAt": "2026-01-16T10:26:33.225Z"
+    },
+    "clientId": 1768559193225,
+    "lineItems": [
+      {
+        "id": 1,
+        "description": "Service",
+        "qty": "1",
+        "unitPrice": "2",
+        "isHours": false
+      }
+    ],
+    "currency": "USD",
+    "exchangeRate": "18.50",
+    "subtotal": 2,
+    "remarks": "",
+    "paymentMethod": "yoco",
+    "status": "paid",
+    "createdAt": "2026-01-16T10:51:14.035Z",
+    "zarTotal": 37,
+    "dueDate": "",
+    "paymentLink": "https://c.yoco.com/checkout/ch_Kx6mpRM2pyXuZ2tbKXfYdBg8",
+    "updatedAt": "2026-01-16T10:51:35.082Z",
+    "paidAt": "2026-01-16T14:06:54.970Z"
+  },
+  {
+    "id": 1768559193225,
+    "invoiceNumber": "INV-2026-01-086",
+    "date": "2026-01-16",
+    "dueDate": "",
+    "paymentTerms": "3 days",
+    "client": {
+      "name": "Shuaib Badat",
+      "company": "Exergy Designs",
+      "address": "",
+      "phone": "+27725739937",
+      "email": "shuaib@exergydesigns.com",
+      "vat": ""
+    },
+    "clientId": null,
+    "lineItems": [
+      {
+        "id": 1,
+        "description": "test",
+        "qty": "1",
+        "unitPrice": "10",
+        "isHours": true
+      }
+    ],
+    "currency": "USD",
+    "exchangeRate": "18.50",
+    "subtotal": 10,
+    "zarTotal": 185,
+    "remarks": "",
+    "paymentLink": "https://c.yoco.com/checkout/ch_8EDJPRoy3BNhrOBu3G2Se55x",
+    "paymentMethod": "yoco",
+    "createdAt": "2026-01-16T10:26:33.225Z",
+    "status": "paid",
+    "paidAt": "2026-01-16T14:06:53.252Z"
+  },
+  {
+    "id": 1768559165692,
+    "invoiceNumber": "INV-2026-01-757",
+    "date": "2026-01-16",
+    "dueDate": "",
+    "paymentTerms": "3 days",
+    "client": {
+      "name": "Ann Kelly",
+      "company": "Group ABR. SA",
+      "address": "",
+      "phone": "+1 (514) 654-4784",
+      "email": "annkelly_b@hotmail.com",
+      "vat": "",
+      "id": 1767964384021
+    },
+    "clientId": 1767964384021,
+    "lineItems": [
+      {
+        "id": 1,
+        "description": "Engineering Hours week 9",
+        "qty": "30",
+        "unitPrice": "64",
+        "isHours": true
+      },
+      {
+        "id": 1768558942156,
+        "description": "Electronics purchased - Circuit board, Emmitter and bearings",
+        "qty": "1",
+        "unitPrice": "120",
+        "isHours": true
+      },
+      {
+        "id": 1768558942831,
+        "description": "Material - Polycarbonate, Stainless steel and resin",
+        "qty": "1",
+        "unitPrice": "192",
+        "isHours": true
+      },
+      {
+        "id": 1768559040615,
+        "description": "Machining ",
+        "qty": "1",
+        "unitPrice": "148",
+        "isHours": true
+      }
+    ],
+    "currency": "USD",
+    "exchangeRate": "18.50",
+    "subtotal": 2380,
+    "zarTotal": 44030,
+    "remarks": "",
+    "paymentLink": "https://c.yoco.com/checkout/ch_yL8YMRBRN0OHNpPh2DQFrDXE",
+    "paymentMethod": "yoco",
+    "createdAt": "2026-01-16T10:26:05.692Z",
+    "status": "paid",
+    "updatedAt": "2026-01-16T10:48:18.321Z",
+    "paidAt": "2026-01-16T23:36:29.518Z"
+  },
+  {
+    "id": 1768555995376,
+    "invoiceNumber": "INV-2026-01-556",
+    "date": "2026-01-16",
+    "dueDate": "",
+    "paymentTerms": "3 days",
+    "client": {
+      "name": "Justin Eugene Evans",
+      "company": "EvansWerks",
+      "address": "",
+      "phone": "+1 (505) 803-5305",
+      "email": "justin.evans@evanswerks.com",
+      "vat": "",
+      "id": 1768555770707
+    },
+    "clientId": 1768555770707,
+    "lineItems": [
+      {
+        "id": 1,
+        "description": "Transport of gas to Joburg",
+        "qty": "1",
+        "unitPrice": "8000",
+        "isHours": false
+      },
+      {
+        "id": 1768555809775,
+        "description": "Hotel stay three nights.",
+        "qty": "1",
+        "unitPrice": "4523",
+        "isHours": false
+      },
+      {
+        "id": 1768555810915,
+        "description": "Flight to Joburg and back.",
+        "qty": "1",
+        "unitPrice": "4074",
+        "isHours": false
+      },
+      {
+        "id": 1768555811545,
+        "description": "New return flight",
+        "qty": "1",
+        "unitPrice": "1900",
+        "isHours": false
+      },
+      {
+        "id": 1768555812618,
+        "description": "Extended Hotel Stay (1 more night)",
+        "qty": "1",
+        "unitPrice": "2050",
+        "isHours": false
+      },
+      {
+        "id": 1768555814020,
+        "description": "Car hire. (uberr from airport was 950 so i opted for this)",
+        "qty": "1",
+        "unitPrice": "2116.2",
+        "isHours": false
+      },
+      {
+        "id": 1768555856500,
+        "description": "total previously received for reimbursement ",
+        "qty": "1",
+        "unitPrice": "-12900.22",
+        "isHours": false
+      },
+      {
+        "id": 1768572378978,
+        "description": "Paid to EW CL for Lusanda Reimbursement",
+        "qty": "1",
+        "unitPrice": "1500",
+        "isHours": false
+      }
+    ],
+    "currency": "ZAR",
+    "exchangeRate": "18.50",
+    "subtotal": 11262.980000000001,
+    "zarTotal": 11262.980000000001,
+    "remarks": "",
+    "paymentLink": "https://c.yoco.com/checkout/ch_yxvqjQawRbkS0OrhbZ7hw1Yg",
+    "createdAt": "2026-01-16T09:33:15.376Z",
+    "status": "paid",
+    "updatedAt": "2026-01-16T14:14:13.760Z",
+    "paymentMethod": "wise",
+    "paidAt": "2026-01-29T13:05:08.447Z"
+  },
+  {
+    "id": 1767964437916,
+    "invoiceNumber": "INV-2026-01-054",
+    "date": "2026-01-09",
+    "dueDate": "",
+    "paymentTerms": "3 days",
+    "client": {
+      "name": "Ann Kelly",
+      "company": "Group ABR. SA",
+      "address": "",
+      "phone": "+1 (514) 654-4784",
+      "email": "annkelly_b@hotmail.com",
+      "vat": ""
+    },
+    "lineItems": [
+      {
+        "id": 1,
+        "description": "Engineering Design - Week 8 ",
+        "qty": "30",
+        "unitPrice": "64",
+        "isHours": true
+      },
+      {
+        "id": 1767964400866,
+        "description": "Prototype Supplies - Motors, Batteries and raw material",
+        "qty": "1",
+        "unitPrice": "80",
+        "isHours": true
+      }
+    ],
+    "currency": "USD",
+    "exchangeRate": "16.76",
+    "subtotal": 2000,
+    "zarTotal": 33520,
+    "remarks": "",
+    "paymentLink": "https://pay.yoco.com/r/7KM6MO",
+    "status": "paid",
+    "createdAt": "2026-01-09T13:13:57.916Z",
+    "updatedAt": "2026-01-09T13:15:22.162Z",
+    "paidAt": "2026-01-16T09:38:47.287Z"
+  },
+  {
+    "id": 1767964384021,
+    "invoiceNumber": "INV-2026-01-143",
+    "date": "2026-01-09",
+    "dueDate": "",
+    "paymentTerms": "3 days",
+    "client": {
+      "name": "Ann Kelly",
+      "company": "Group ABR. SA",
+      "address": "",
+      "phone": "+1 (514) 654-4784",
+      "email": "annkelly_b@hotmail.com",
+      "vat": ""
+    },
+    "lineItems": [
+      {
+        "id": 1,
+        "description": "Engineering Design (Monday 29 DEC)",
+        "qty": "4",
+        "unitPrice": "64",
+        "isHours": true
+      },
+      {
+        "id": 1767964290354,
+        "description": "Engineering Design Week 7",
+        "qty": "30",
+        "unitPrice": "64",
+        "isHours": true
+      }
+    ],
+    "currency": "USD",
+    "exchangeRate": "16.76",
+    "subtotal": 2176,
+    "zarTotal": 36469.76,
+    "remarks": "",
+    "paymentLink": "https://pay.yoco.com/r/4xZrZz",
+    "status": "paid",
+    "createdAt": "2026-01-09T13:13:04.021Z",
+    "updatedAt": "2026-01-09T13:14:10.005Z",
+    "paidAt": "2026-01-09T13:25:32.936Z"
+  }
+]
