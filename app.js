@@ -66,6 +66,7 @@ let invoices = [];
 let payments = [];
 let transactions = [];
 let timeEntries = [];
+let billingEntries = [];
 let settings = {};
 let firefliesIntegration = null;
 let teammates = [];
@@ -100,11 +101,17 @@ document.addEventListener('DOMContentLoaded', () => {
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         supabaseClient.auth.onAuthStateChange((event, session) => {
+            console.log('[Auth] State change event:', event);
             if (session && session.user) {
+                console.log('[Auth] User signed in:', session.user.email);
                 currentUser = session.user;
                 showApp();
-                loadAllData();
+                loadAllData().catch(err => {
+                    console.error('[Auth] Error loading data:', err);
+                    toast('Failed to load data', 'error');
+                });
             } else {
+                console.log('[Auth] User signed out');
                 currentUser = null;
                 showLogin();
             }
@@ -141,7 +148,8 @@ async function signInWithGoogle() {
             options: { redirectTo: window.location.origin + window.location.pathname }
         });
     } catch (err) {
-        toast('Sign in failed', 'error');
+        console.error('[Auth] Sign in error:', err);
+        toast('Sign in failed: ' + (err.message || 'Unknown error'), 'error');
     }
 }
 
@@ -169,11 +177,21 @@ function showApp() {
         return;
     }
     
-    // Domain restriction - only @exergydesigns.com allowed
+    // Access control - allow @exergydesigns.com OR team members
     const email = currentUser.email || '';
-    const domain = email.split('@')[1];
+    const emailParts = email.split('@');
+    const domain = emailParts.length === 2 ? emailParts[1] : null;
     
-    if (domain !== 'exergydesigns.com') {
+    // Load team members from data-loader or localStorage
+    const team = window.ORACLE_PRELOAD?.team || JSON.parse(localStorage.getItem('oracle_team') || '[]');
+    const allowedFreelancers = team.map(m => m.email.toLowerCase());
+    
+    const isExergyEmail = domain && domain.toLowerCase() === 'exergydesigns.com';
+    const isAllowedFreelancer = allowedFreelancers.includes(email.toLowerCase());
+    
+    console.log('[Auth] Access check:', { email, isExergyEmail, isAllowedFreelancer, teamEmails: allowedFreelancers });
+    
+    if (!isExergyEmail && !isAllowedFreelancer) {
         showAccessDenied();
         return;
     }
@@ -309,10 +327,60 @@ async function initializeFireflies() {
         console.log('[Fireflies] Initializing...');
         firefliesIntegration = new FirefliesIntegration(window.ORACLE_CONFIG.fireflies.apiKey);
         
-        // Load meetings and teammates
-        await firefliesIntegration.fetchMeetings(50);
+        // Check last sync time to avoid rate limits
+        const lastSync = parseInt(localStorage.getItem('fireflies_last_sync') || '0');
+        const now = Date.now();
+        const SYNC_INTERVAL = 30 * 60 * 1000; // 30 minutes
+        
+        // Load from cache first
+        const cached = localStorage.getItem('oracle_meetings');
+        if (cached) {
+            try {
+                meetings = JSON.parse(cached);
+                window.ORACLE_MEETINGS = meetings;
+                console.log('[Fireflies] Loaded', meetings.length, 'meetings from cache');
+            } catch (e) {
+                console.warn('[Fireflies] Cache parse error:', e);
+            }
+        }
+        
+        // Check if we hit rate limit recently
+        const rateLimitUntil = parseInt(localStorage.getItem('fireflies_rate_limit_until') || '0');
+        const isRateLimited = now < rateLimitUntil;
+        
+        if (isRateLimited) {
+            const waitMinutes = Math.round((rateLimitUntil - now) / 60000);
+            console.log('[Fireflies] 🚫 Rate limited - skipping API call (retry in', waitMinutes, 'minutes)');
+        } else if (now - lastSync > SYNC_INTERVAL) {
+            console.log('[Fireflies] Fetching from API (last sync:', Math.round((now - lastSync) / 60000), 'mins ago)');
+            try {
+                await firefliesIntegration.fetchMeetings(500);
+                teammates = firefliesIntegration.teammates;
+                meetings = firefliesIntegration.meetings;
+                localStorage.setItem('fireflies_last_sync', String(now));
+                localStorage.setItem('oracle_meetings', JSON.stringify(meetings));
+                localStorage.removeItem('fireflies_rate_limit_until'); // Clear any old rate limit
+                console.log('[Fireflies] ✅ Synced', meetings.length, 'meetings');
+            } catch (err) {
+                console.warn('[Fireflies] ⚠️ API error (using cached data):', err.message);
+                
+                // If rate limit error, store when it expires
+                if (err.message?.includes('Too many requests') || err.message?.includes('retry after')) {
+                    // Parse retry time from error message or default to tomorrow midnight UTC
+                    const tomorrow = new Date();
+                    tomorrow.setUTCHours(24, 0, 0, 0);
+                    localStorage.setItem('fireflies_rate_limit_until', String(tomorrow.getTime()));
+                    console.log('[Fireflies] 🚫 Rate limit stored - will retry after', tomorrow.toISOString());
+                }
+            }
+        } else {
+            console.log('[Fireflies] Using cache (next sync in', Math.round((SYNC_INTERVAL - (now - lastSync)) / 60000), 'mins)');
+        }
+        
         teammates = firefliesIntegration.teammates;
-        meetings = firefliesIntegration.meetings;
+        if (meetings.length === 0 && firefliesIntegration.meetings?.length > 0) {
+            meetings = firefliesIntegration.meetings;
+        }
         
         console.log(`[Fireflies] Loaded ${meetings.length} meetings, ${teammates.length} teammates`);
         
@@ -586,19 +654,19 @@ async function loadProjects() {
         localStorage.setItem('oracle_projects', JSON.stringify(projects));
     }
     
-    // If still empty AND we have Supabase, pull from there as initial seed only
+    // If still empty AND we have Supabase, pull SHARED data (not user-specific)
     if (projects.length === 0 && currentUser && supabaseClient) {
         try {
+            // Pull ALL projects (shared across team - no user_id filter)
             const { data, error } = await supabaseClient
                 .from('projects')
                 .select('*')
-                .eq('user_id', currentUser.id)
                 .order('created_at', { ascending: false });
             
             if (!error && data?.length > 0) {
                 projects = data;
                 localStorage.setItem('oracle_projects', JSON.stringify(projects));
-                console.log('[Oracle] Seeded', data.length, 'projects from Supabase');
+                console.log('[Oracle] Synced', data.length, 'shared projects from Supabase');
             }
         } catch (e) {
             console.warn('Failed to seed projects from Supabase:', e);
@@ -622,18 +690,18 @@ async function loadClients() {
         clients = stored;
     }
     
-    // If local is empty AND we have Supabase, pull from there as initial seed only
+    // Pull SHARED data from Supabase (all team clients)
     if (clients.length === 0 && currentUser && supabaseClient) {
         try {
             const { data, error } = await supabaseClient
                 .from('clients')
                 .select('*')
-                .eq('user_id', currentUser.id)
                 .order('name');
             
             if (!error && data?.length > 0) {
                 clients = data;
                 localStorage.setItem('oracle_clients', JSON.stringify(clients));
+                console.log('[Oracle] Synced', data.length, 'shared clients from Supabase');
             }
         } catch (e) {
             console.warn('Failed to seed clients from Supabase:', e);
@@ -656,18 +724,18 @@ async function loadInvoices() {
         invoices = stored;
     }
     
-    // If local is empty AND we have Supabase, pull from there as initial seed only
+    // Pull SHARED data from Supabase (all team invoices)
     if (invoices.length === 0 && currentUser && supabaseClient) {
         try {
             const { data, error } = await supabaseClient
                 .from('invoices')
                 .select('*')
-                .eq('user_id', currentUser.id)
                 .order('date', { ascending: false });
             
             if (!error && data?.length > 0) {
                 invoices = data;
                 localStorage.setItem('oracle_invoices', JSON.stringify(invoices));
+                console.log('[Oracle] Synced', data.length, 'shared invoices from Supabase');
             }
         } catch (e) {
             console.warn('Failed to seed invoices from Supabase:', e);
@@ -690,18 +758,18 @@ async function loadPayments() {
         payments = stored;
     }
     
-    // If local is empty AND we have Supabase, pull from there as initial seed only
+    // Pull SHARED data from Supabase (all team payments)
     if (payments.length === 0 && currentUser && supabaseClient) {
         try {
-            const { data, error } = await supabaseClient
+            const { data, error} = await supabaseClient
                 .from('payments')
                 .select('*')
-                .eq('user_id', currentUser.id)
                 .order('paid_at', { ascending: false });
             
             if (!error && data?.length > 0) {
                 payments = data;
                 localStorage.setItem('oracle_payments', JSON.stringify(payments));
+                console.log('[Oracle] Synced', data.length, 'shared payments from Supabase');
             }
         } catch (e) {
             console.warn('Failed to seed payments from Supabase:', e);
@@ -716,18 +784,19 @@ async function loadTransactions() {
     const stored = JSON.parse(localStorage.getItem('oracle_transactions') || '[]');
     transactions = stored;
     
-    // If local is empty AND we have Supabase, pull from there as initial seed only
+    // Pull SHARED data from Supabase (all team transactions)
     if (transactions.length === 0 && currentUser && supabaseClient) {
         try {
             const { data, error } = await supabaseClient
                 .from('transactions')
                 .select('*')
-                .eq('user_id', currentUser.id)
-                .order('transaction_date', { ascending: false });
+                .order('transaction_date', { ascending: false })
+                .limit(1000);
             
             if (!error && data?.length > 0) {
                 transactions = data;
                 localStorage.setItem('oracle_transactions', JSON.stringify(transactions.slice(0, 500)));
+                console.log('[Oracle] Synced', data.length, 'shared transactions from Supabase');
             }
         } catch (e) {
             console.warn('Failed to seed transactions from Supabase:', e);
@@ -809,6 +878,7 @@ function updateSettingsStatus() {
 function loadLocalData() {
     // Load time entries from localStorage always
     timeEntries = JSON.parse(localStorage.getItem('oracle_time_entries') || '[]');
+    billingEntries = JSON.parse(localStorage.getItem('oracle_billing_entries') || '[]');
     renderTimeEntries();
     updateTodayTotal();
     restoreTimerState();
@@ -830,7 +900,12 @@ function renderProjects() {
         const client = clients.find(c => c.id === p.client_id);
         const projectTimeEntries = timeEntries.filter(t => t.project_id === p.id);
         const totalHours = projectTimeEntries.reduce((s, t) => s + t.duration, 0) / 3600;
-        const revenue = totalHours * (p.hourly_rate || 0);
+        const timeRevenue = totalHours * (p.hourly_rate || 0);
+        
+        // Add manual billing entries
+        const projectBillings = billingEntries.filter(b => b.project_id === p.id);
+        const billingRevenue = projectBillings.reduce((s, b) => s + (b.amount || 0), 0);
+        const totalRevenue = (timeRevenue * (settings.default_exchange_rate || 18.5)) + billingRevenue;
         
         return `
             <div class="project-card" onclick="editProject('${p.id}')">
@@ -852,9 +927,10 @@ function renderProjects() {
                     </div>
                     <div>
                         <div class="project-stat-label">Revenue</div>
-                        <div class="project-stat-value">${formatZAR(revenue * (settings.default_exchange_rate || 18.5))}</div>
+                        <div class="project-stat-value">${formatZAR(totalRevenue)}</div>
                     </div>
                 </div>
+                ${projectBillings.length > 0 ? `<div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--grey-200);">${projectBillings.length} manual billing ${projectBillings.length === 1 ? 'entry' : 'entries'}</div>` : ''}
             </div>
         `;
     }).join('');
@@ -937,6 +1013,9 @@ async function saveProject() {
     updateProjectDropdowns();
     closeModal();
     toast('Project saved', 'success');
+    
+    // Auto-sync to cloud
+    syncData();
 }
 
 function editProject(id) {
@@ -1051,6 +1130,9 @@ async function saveClient() {
     updateClientDropdowns();
     closeModal();
     toast('Client saved', 'success');
+    
+    // Auto-sync to cloud
+    syncData();
 }
 
 function editClient(id) {
@@ -1288,6 +1370,9 @@ async function saveInvoice() {
     updateDashboard();
     closeModal();
     toast('Invoice saved', 'success');
+    
+    // Auto-sync to cloud
+    syncData();
 }
 
 function editInvoice(id) {
@@ -1588,6 +1673,9 @@ async function saveTimeEntry() {
     });
     
     toast('Time entry saved', 'success');
+    
+    // Auto-sync to cloud
+    syncData();
 }
 
 function deleteTimeEntry(id) {
@@ -1659,6 +1747,185 @@ function exportTimeEntries() {
     
     toast('Exported time entries', 'success');
 }
+
+// ============================================================
+// MANUAL BILLING ENTRIES
+// ============================================================
+function showBillingModal() {
+    openModal('billingModal');
+    
+    // Populate project dropdown
+    const projectSelect = document.getElementById('billingProject');
+    projectSelect.innerHTML = '<option value="">Select project...</option>' + 
+        projects.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+    
+    // Set default week end date to next Sunday
+    const today = new Date();
+    const daysUntilSunday = (7 - today.getDay()) % 7;
+    const nextSunday = new Date(today);
+    nextSunday.setDate(today.getDate() + (daysUntilSunday === 0 ? 7 : daysUntilSunday));
+    
+    const weekEndInput = document.getElementById('billingWeekEnd');
+    weekEndInput.value = nextSunday.toISOString().split('T')[0];
+    weekEndInput.min = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+    
+    // Reset form
+    document.getElementById('billingType').value = 'time';
+    document.getElementById('billingHours').value = '';
+    document.getElementById('billingAmount').value = '';
+    document.getElementById('billingDescription').value = '';
+    document.getElementById('billingPreview').style.display = 'none';
+    updateBillingFields();
+}
+
+function updateBillingFields() {
+    const billingType = document.getElementById('billingType').value;
+    const hoursGroup = document.getElementById('hoursGroup');
+    const amountGroup = document.getElementById('amountGroup');
+    const billingPreview = document.getElementById('billingPreview');
+    
+    if (billingType === 'time') {
+        hoursGroup.style.display = 'block';
+        amountGroup.style.display = 'none';
+    } else {
+        hoursGroup.style.display = 'none';
+        amountGroup.style.display = 'block';
+    }
+    
+    // Update preview when fields change
+    updateBillingPreview();
+}
+
+function updateBillingPreview() {
+    const projectSelect = document.getElementById('billingProject');
+    const billingType = document.getElementById('billingType').value;
+    const hours = parseFloat(document.getElementById('billingHours').value) || 0;
+    const amount = parseFloat(document.getElementById('billingAmount').value) || 0;
+    const weekEnd = document.getElementById('billingWeekEnd').value;
+    
+    const project = projects.find(p => p.id === projectSelect.value);
+    const preview = document.getElementById('billingPreview');
+    const previewText = document.getElementById('billingPreviewText');
+    
+    if (!project || (!hours && !amount) || !weekEnd) {
+        preview.style.display = 'none';
+        return;
+    }
+    
+    let text = '';
+    if (billingType === 'time') {
+        const rate = project.hourly_rate || 0;
+        const total = hours * rate;
+        text = `${hours} hours × R${rate.toFixed(2)}/hr = R${total.toFixed(2)} for ${project.name}`;
+    } else {
+        text = `Fixed price R${amount.toFixed(2)} for ${project.name}`;
+    }
+    text += ` (Week ending ${new Date(weekEnd).toLocaleDateString()})`;
+    
+    previewText.textContent = text;
+    preview.style.display = 'block';
+}
+
+// Add event listeners for preview updates
+document.addEventListener('DOMContentLoaded', () => {
+    const billingFields = ['billingProject', 'billingType', 'billingHours', 'billingAmount', 'billingWeekEnd'];
+    billingFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', updateBillingPreview);
+            el.addEventListener('input', updateBillingPreview);
+        }
+    });
+});
+
+async function saveBillingEntry() {
+    const projectId = document.getElementById('billingProject').value;
+    const billingType = document.getElementById('billingType').value;
+    const hours = parseFloat(document.getElementById('billingHours').value) || 0;
+    const amount = parseFloat(document.getElementById('billingAmount').value) || 0;
+    const weekEnd = document.getElementById('billingWeekEnd').value;
+    const description = document.getElementById('billingDescription').value;
+    
+    // Validation
+    if (!projectId) {
+        toast('Please select a project', 'error');
+        return;
+    }
+    
+    const selectedDate = new Date(weekEnd);
+    if (selectedDate.getDay() !== 0) {
+        toast('Week end date must be a Sunday', 'error');
+        return;
+    }
+    
+    if (billingType === 'time' && hours <= 0) {
+        toast('Please enter hours worked', 'error');
+        return;
+    }
+    
+    if (billingType === 'fixed' && amount <= 0) {
+        toast('Please enter billing amount', 'error');
+        return;
+    }
+    
+    const project = projects.find(p => p.id === projectId);
+    if (!project) {
+        toast('Project not found', 'error');
+        return;
+    }
+    
+    // Calculate amount based on type
+    let finalAmount = 0;
+    if (billingType === 'time') {
+        finalAmount = hours * (project.hourly_rate || 0);
+    } else {
+        finalAmount = amount;
+    }
+    
+    // Create billing entry
+    const entry = {
+        id: crypto.randomUUID(),
+        project_id: projectId,
+        project_name: project.name,
+        client_id: project.client_id,
+        billing_type: billingType,
+        hours: billingType === 'time' ? hours : null,
+        hourly_rate: billingType === 'time' ? project.hourly_rate : null,
+        amount: finalAmount,
+        currency: 'ZAR',
+        week_ending: weekEnd,
+        description: description || (billingType === 'time' ? `${hours} hours of work` : 'Fixed price billing'),
+        created_at: new Date().toISOString(),
+        created_by: currentUser?.id || 'manual'
+    };
+    
+    // Save to memory and localStorage
+    billingEntries.unshift(entry);
+    localStorage.setItem('oracle_billing_entries', JSON.stringify(billingEntries));
+    
+    // Sync to Supabase
+    if (supabaseClient && currentUser) {
+        try {
+            await supabaseClient.from('billing_entries').insert(entry);
+        } catch (e) {
+            console.warn('[Billing] Failed to sync to Supabase:', e);
+        }
+    }
+    
+    // Update UI
+    toast(`Billing entry saved: R${finalAmount.toFixed(2)}`, 'success');
+    closeModal();
+    renderProjects(); // Refresh project cards to show billing
+    updateDashboard();
+    
+    // Auto-sync to cloud
+    syncData();
+}
+
+// Export for window
+window.showBillingModal = showBillingModal;
+window.updateBillingFields = updateBillingFields;
+window.saveBillingEntry = saveBillingEntry;
 
 // ============================================================
 // DASHBOARD
@@ -1855,31 +2122,38 @@ function parseStandardBankText(text, accountType = 'bank') {
     const transactions = [];
     const lines = text.split('\n');
     
-    // Standard Bank format patterns
-    const txnPattern = /(\d{2}\s+\w{3}\s+\d{2})\s+(.+?)\s+([-]?[\d,]+\.\d{2})\s+([\d,]+\.\d{2})/g;
+    // Standard Bank format patterns - more flexible
+    const txnPattern = /(\d{2}\s+\w{3}\s+\d{2})\s+(.+?)\s+([-]?[\d,]+\.\d{2})\s+([\d,]+\.\d{2})/;
     
     for (const line of lines) {
-        const matches = [...line.matchAll(txnPattern)];
-        for (const match of matches) {
+        // Skip empty lines and headers
+        if (!line.trim() || line.includes('Date') || line.includes('Description')) continue;
+        
+        const match = line.match(txnPattern);
+        if (match) {
             const [_, dateStr, rawDesc, amountStr, balanceStr] = match;
             const amount = parseFloat(amountStr.replace(/,/g, ''));
-            const description = rawDesc.trim();
+            // Clean up description - remove extra whitespace and trim
+            const description = rawDesc.trim().replace(/\s+/g, ' ');
             const date = parseStandardBankDate(dateStr);
             const classification = classifyBankTransaction(description, amount);
             
-            transactions.push({
-                id: crypto.randomUUID(),
-                date,
-                description,
-                amount,
-                balance: parseFloat(balanceStr.replace(/,/g, '')),
-                source: accountType,
-                type: amount >= 0 ? 'income' : 'expense',
-                category: classification.category,
-                subcategory: classification.subcategory,
-                entity: classification.entity,
-                is_fee: classification.isFee
-            });
+            // Only add if description is meaningful (not just numbers or very short)
+            if (description.length > 3 && !/^\d+$/.test(description)) {
+                transactions.push({
+                    id: crypto.randomUUID(),
+                    date,
+                    description,
+                    amount,
+                    balance: parseFloat(balanceStr.replace(/,/g, '')),
+                    source: accountType,
+                    type: amount >= 0 ? 'income' : 'expense',
+                    category: classification.category,
+                    subcategory: classification.subcategory,
+                    entity: classification.entity,
+                    is_fee: classification.isFee
+                });
+            }
         }
     }
     
@@ -2351,11 +2625,22 @@ ${allActionItems.slice(0, 10).map(item => `- [${item.teammate}] ${item.action} (
 
     // Add meeting summaries if available
     if (recentMeetings.length > 0 && recentMeetings[0].summary?.overview) {
+        const latestMeeting = recentMeetings[0];
+        let actionItemsText = 'None recorded';
+        
+        if (latestMeeting.summary.action_items) {
+            if (Array.isArray(latestMeeting.summary.action_items)) {
+                actionItemsText = latestMeeting.summary.action_items.join('; ');
+            } else if (typeof latestMeeting.summary.action_items === 'string') {
+                actionItemsText = latestMeeting.summary.action_items;
+            }
+        }
+        
         summary += `\n=== LATEST MEETING SUMMARY ===
-Title: ${recentMeetings[0].title}
-Date: ${new Date(recentMeetings[0].date).toLocaleDateString()}
-Summary: ${recentMeetings[0].summary.overview}
-Action Items: ${recentMeetings[0].summary.action_items || 'None recorded'}
+Title: ${latestMeeting.title}
+Date: ${new Date(latestMeeting.date).toLocaleDateString()}
+Summary: ${latestMeeting.summary.overview}
+Action Items: ${actionItemsText}
 `;
     }
     
@@ -2425,6 +2710,17 @@ function navigateTo(page) {
         settings: ['Settings', 'Configuration']
     };
     
+    // Render page-specific data
+    if (page === 'analyzer') {
+        renderFinancialAnalyzer();
+    } else if (page === 'team') {
+        renderTeamPage();
+    } else if (page === 'meetings') {
+        renderMeetingsPage();
+    } else if (page === 'scanned') {
+        loadScannedData();
+    }
+    
     document.getElementById('pageTitle').textContent = titles[page]?.[0] || 'Dashboard';
     document.getElementById('pageSubtitle').textContent = titles[page]?.[1] || '';
 }
@@ -2482,6 +2778,7 @@ async function syncData() {
     
     console.log('[Oracle] SYNC START - projects in memory:', projects.length);
     console.log('[Oracle] SYNC START - projects in localStorage:', JSON.parse(localStorage.getItem('oracle_projects') || '[]').length);
+    console.log('[Oracle] SYNC START - supabaseClient:', !!supabaseClient, 'currentUser:', !!currentUser);
     
     // First, ensure memory matches localStorage (in case something wiped memory)
     if (projects.length === 0) {
@@ -2493,12 +2790,13 @@ async function syncData() {
         }
     }
     
-    toast('Syncing to cloud...', 'success');
-    
     if (!supabaseClient || !currentUser) {
-        toast('Not connected to Supabase - data saved locally only', 'success');
+        console.warn('[Oracle] Cannot sync - supabaseClient:', !!supabaseClient, 'currentUser:', !!currentUser);
+        toast('⚠️ Data saved locally only (cloud sync unavailable)', 'error');
         return;
     }
+    
+    toast('Syncing to cloud...', 'success');
     
     let synced = 0;
     let errors = 0;
@@ -2507,14 +2805,21 @@ async function syncData() {
     if (projects.length > 0) {
         const projectsToSync = projects.map(p => ({ ...p, user_id: currentUser.id }));
         try {
-            const { error } = await supabaseClient.from('projects').upsert(projectsToSync, { onConflict: 'id' });
-            if (error) throw error;
+            console.log('[Oracle] Syncing', projectsToSync.length, 'projects to Supabase...');
+            const { data, error } = await supabaseClient.from('projects').upsert(projectsToSync, { onConflict: 'id' });
+            if (error) {
+                console.error('[Oracle] Projects sync error:', error);
+                throw error;
+            }
             synced++;
-            console.log('[Oracle] Projects synced:', projects.length);
+            console.log('[Oracle] ✅ Projects synced successfully:', projects.length);
         } catch (e) { 
-            console.warn('Projects sync failed:', e); 
+            console.error('[Oracle] ❌ Projects sync failed:', e.message || e);
+            toast('⚠️ Projects sync failed: ' + (e.message || 'Unknown error'), 'error');
             errors++; 
         }
+    } else {
+        console.log('[Oracle] No projects to sync');
     }
     
     // Sync clients
@@ -2569,6 +2874,16 @@ async function syncData() {
         } catch (e) { console.warn('Time entries sync failed:', e); }
     }
 
+    // Sync billing entries
+    if (billingEntries.length > 0) {
+        const billingsToSync = billingEntries.map(b => ({ ...b, user_id: currentUser.id }));
+        try {
+            const { error } = await supabaseClient.from('billing_entries').upsert(billingsToSync, { onConflict: 'id' });
+            if (error) console.warn('[Oracle] Billing entries sync failed:', error.message);
+            else synced++;
+        } catch (e) { console.warn('Billing entries sync failed:', e); }
+    }
+
     // Sync allocations
     const allocations = window.ORACLE_PRELOAD?.allocations || [];
     if (allocations.length > 0) {
@@ -2596,6 +2911,7 @@ async function syncData() {
     localStorage.setItem('oracle_projects', JSON.stringify(projects));
     localStorage.setItem('oracle_clients', JSON.stringify(clients));
     localStorage.setItem('oracle_invoices', JSON.stringify(invoices));
+    localStorage.setItem('oracle_billing_entries', JSON.stringify(billingEntries));
     
     console.log('[Oracle] SYNC END - projects still in memory:', projects.length);
     
@@ -2608,23 +2924,213 @@ async function syncData() {
     console.log(`[Oracle] Sync complete: ${synced} types synced, ${errors} errors`);
 }
 
+// Pull ALL data from Supabase and merge with local
+async function pullFromCloud() {
+    if (!supabaseClient || !currentUser) {
+        toast('Not connected to Supabase', 'error');
+        return;
+    }
+
+    toast('Pulling data from cloud...', 'success');
+
+    try {
+        // Pull projects
+        const { data: cloudProjects } = await supabaseClient
+            .from('projects')
+            .select('*')
+            .eq('user_id', currentUser.id);
+        
+        if (cloudProjects?.length > 0) {
+            const localIds = new Set(projects.map(p => p.id));
+            const newProjects = cloudProjects.filter(p => !localIds.has(p.id));
+            if (newProjects.length > 0) {
+                projects = [...projects, ...newProjects];
+                localStorage.setItem('oracle_projects', JSON.stringify(projects));
+                console.log('[Oracle] Added', newProjects.length, 'projects from cloud');
+            }
+        }
+
+        // Pull clients
+        const { data: cloudClients } = await supabaseClient
+            .from('clients')
+            .select('*')
+            .eq('user_id', currentUser.id);
+        
+        if (cloudClients?.length > 0) {
+            const localIds = new Set(clients.map(c => c.id));
+            const newClients = cloudClients.filter(c => !localIds.has(c.id));
+            if (newClients.length > 0) {
+                clients = [...clients, ...newClients];
+                localStorage.setItem('oracle_clients', JSON.stringify(clients));
+                console.log('[Oracle] Added', newClients.length, 'clients from cloud');
+            }
+        }
+
+        // Pull invoices
+        const { data: cloudInvoices } = await supabaseClient
+            .from('invoices')
+            .select('*')
+            .eq('user_id', currentUser.id);
+        
+        if (cloudInvoices?.length > 0) {
+            const localIds = new Set(invoices.map(i => i.id));
+            const newInvoices = cloudInvoices.filter(i => !localIds.has(i.id));
+            if (newInvoices.length > 0) {
+                invoices = [...invoices, ...newInvoices];
+                localStorage.setItem('oracle_invoices', JSON.stringify(invoices));
+                console.log('[Oracle] Added', newInvoices.length, 'invoices from cloud');
+            }
+        }
+
+        // Pull transactions
+        const { data: cloudTransactions } = await supabaseClient
+            .from('transactions')
+            .select('*')
+            .eq('user_id', currentUser.id);
+        
+        if (cloudTransactions?.length > 0) {
+            const localIds = new Set(transactions.map(t => t.id));
+            const newTransactions = cloudTransactions.filter(t => !localIds.has(t.id));
+            if (newTransactions.length > 0) {
+                transactions = [...transactions, ...newTransactions];
+                localStorage.setItem('oracle_transactions', JSON.stringify(transactions));
+                console.log('[Oracle] Added', newTransactions.length, 'transactions from cloud');
+            }
+        }
+
+        // Pull payments
+        const { data: cloudPayments } = await supabaseClient
+            .from('payments')
+            .select('*')
+            .eq('user_id', currentUser.id);
+        
+        if (cloudPayments?.length > 0) {
+            const localIds = new Set(payments.map(p => p.id));
+            const newPayments = cloudPayments.filter(p => !localIds.has(p.id));
+            if (newPayments.length > 0) {
+                payments = [...payments, ...newPayments];
+                localStorage.setItem('oracle_payments', JSON.stringify(payments));
+                console.log('[Oracle] Added', newPayments.length, 'payments from cloud');
+            }
+        }
+
+        // Pull billing entries
+        const { data: cloudBillings } = await supabaseClient
+            .from('billing_entries')
+            .select('*')
+            .eq('user_id', currentUser.id);
+        
+        if (cloudBillings?.length > 0) {
+            const localIds = new Set(billingEntries.map(b => b.id));
+            const newBillings = cloudBillings.filter(b => !localIds.has(b.id));
+            if (newBillings.length > 0) {
+                billingEntries = [...billingEntries, ...newBillings];
+                localStorage.setItem('oracle_billing_entries', JSON.stringify(billingEntries));
+                console.log('[Oracle] Added', newBillings.length, 'billing entries from cloud');
+            }
+        }
+
+        // Reload UI
+        renderProjects();
+        renderClients();
+        renderInvoices();
+        renderPayments();
+        renderTransactions();
+        updateDashboard();
+
+        toast('Data synced from cloud successfully', 'success');
+    } catch (e) {
+        console.error('[Oracle] Pull from cloud failed:', e);
+        toast('Failed to pull data from cloud: ' + e.message, 'error');
+    }
+}
+
 // ============================================================
 // FINANCIAL ANALYZER (Admin Only)
 // ============================================================
 function renderFinancialAnalyzer() {
-    if (!window.ORACLE_PRELOAD) return;
+    console.log('[Oracle] Rendering Financial Analyzer...');
+    
+    if (!window.ORACLE_PRELOAD) {
+        console.warn('[Oracle] ORACLE_PRELOAD not available');
+        return;
+    }
     
     const totals = window.ORACLE_PRELOAD.upworkTotals;
     const earnings = window.ORACLE_PRELOAD.upworkEarnings || [];
     const allocations = window.ORACLE_PRELOAD.allocations || window.ORACLE_PRELOAD.freelancerAllocations || [];
     
-    if (!totals) return;
+    console.log('[Oracle] Financial Analyzer data:', { 
+        hasTotals: !!totals, 
+        earningsCount: earnings.length, 
+        allocationsCount: allocations.length,
+        transactionsCount: transactions.length
+    });
     
-    // Update stats
-    document.getElementById('analyzerUpworkGross').textContent = '$' + totals.totalGross.toLocaleString('en-US', { minimumFractionDigits: 2 });
-    document.getElementById('analyzerUpworkNet').textContent = '$' + totals.totalNet.toLocaleString('en-US', { minimumFractionDigits: 2 });
-    document.getElementById('analyzerUpworkHours').textContent = totals.totalHours.toFixed(1) + 'h';
-    document.getElementById('analyzerUpworkFees').textContent = '-$' + (totals.totalFees + totals.totalVAT).toLocaleString('en-US', { minimumFractionDigits: 2 });
+    // Calculate bank deposits and payments from transactions
+    const bankDeposits = transactions.filter(t => 
+        t.amount > 0 && 
+        t.transaction_type !== 'Withdrawal' &&
+        !t.description?.toLowerCase().includes('upwork')
+    );
+    
+    const yocoPayments = bankDeposits.filter(t => 
+        t.description?.toUpperCase().includes('YOCO') ||
+        t.description?.toUpperCase().includes('CARD PURCH')
+    );
+    
+    const directPayments = bankDeposits.filter(t => 
+        !t.description?.toUpperCase().includes('YOCO') &&
+        !t.description?.toUpperCase().includes('CARD PURCH')
+    );
+    
+    const totalBankDeposits = bankDeposits.reduce((sum, t) => sum + t.amount, 0);
+    const totalYoco = yocoPayments.reduce((sum, t) => sum + t.amount, 0);
+    const totalDirect = directPayments.reduce((sum, t) => sum + t.amount, 0);
+    
+    // Upwork revenue (convert to ZAR using settings exchange rate)
+    const exchangeRate = settings.default_exchange_rate || 18.5;
+    const upworkNetZAR = totals ? totals.totalNet * exchangeRate : 0;
+    
+    const totalRevenue = upworkNetZAR + totalBankDeposits;
+    
+    console.log('[Oracle] Revenue breakdown:', {
+        upworkUSD: totals?.totalNet || 0,
+        upworkZAR: upworkNetZAR,
+        bankDeposits: totalBankDeposits,
+        yoco: totalYoco,
+        direct: totalDirect,
+        total: totalRevenue
+    });
+    
+    // Update Upwork stats
+    if (totals) {
+        document.getElementById('analyzerUpworkNet').textContent = '$' + totals.totalNet.toLocaleString('en-US', { minimumFractionDigits: 2 });
+        document.getElementById('analyzerUpworkHours').textContent = totals.totalHours.toFixed(1) + 'h tracked';
+    } else {
+        document.getElementById('analyzerUpworkNet').textContent = '$0';
+        document.getElementById('analyzerUpworkHours').textContent = '0h tracked';
+    }
+    
+    // Update bank deposit stats
+    document.getElementById('analyzerBankDeposits').textContent = formatZAR(totalBankDeposits);
+    document.getElementById('analyzerBankCount').textContent = bankDeposits.length + ' deposits';
+    
+    document.getElementById('analyzerYocoDeposits').textContent = formatZAR(totalYoco);
+    document.getElementById('analyzerYocoCount').textContent = yocoPayments.length + ' payments';
+    
+    document.getElementById('analyzerDirectPayments').textContent = formatZAR(totalDirect);
+    document.getElementById('analyzerDirectCount').textContent = directPayments.length + ' payments';
+    
+    document.getElementById('analyzerTotalRevenue').textContent = formatZAR(totalRevenue);
+    
+    if (!totals) {
+        document.getElementById('analyzerClientRevenue').innerHTML = '<div class="empty-state"><p>No Upwork data available</p></div>';
+        document.getElementById('analyzerMonthlyRevenue').innerHTML = '<div class="empty-state"><p>No monthly data available</p></div>';
+        document.getElementById('analyzerAllocations').innerHTML = '<div class="empty-state"><p>No allocations yet</p></div>';
+        document.getElementById('analyzerRecentEarnings').innerHTML = '<div class="empty-state"><p>No earnings data</p></div>';
+        return;
+    }
     
     // Client Revenue
     const clientContainer = document.getElementById('analyzerClientRevenue');
@@ -2709,6 +3215,46 @@ function renderFinancialAnalyzer() {
                 </div>
             </div>
         `).join('');
+    }
+    
+    // Yoco Payments
+    const yocoContainer = document.getElementById('analyzerYocoList');
+    if (yocoContainer) {
+        if (yocoPayments.length) {
+            yocoContainer.innerHTML = yocoPayments.slice(0, 20).map(t => `
+                <div class="list-item" style="display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border);">
+                    <div>
+                        <div style="font-weight: 500;">${escapeHtml(t.description || 'Yoco Payment')}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">${t.transaction_date || 'Unknown date'}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-family: var(--font-mono); font-weight: 600; color: var(--success);">+${formatZAR(t.amount)}</div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            yocoContainer.innerHTML = '<div class="empty-state"><p>No Yoco payments found</p></div>';
+        }
+    }
+    
+    // Direct Deposits
+    const directContainer = document.getElementById('analyzerDirectList');
+    if (directContainer) {
+        if (directPayments.length) {
+            directContainer.innerHTML = directPayments.slice(0, 20).map(t => `
+                <div class="list-item" style="display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border);">
+                    <div>
+                        <div style="font-weight: 500;">${escapeHtml(t.description || 'Bank Deposit')}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">${t.transaction_date || 'Unknown date'}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-family: var(--font-mono); font-weight: 600; color: var(--success);">+${formatZAR(t.amount)}</div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            directContainer.innerHTML = '<div class="empty-state"><p>No direct deposits found</p></div>';
+        }
     }
 }
 
@@ -2875,6 +3421,9 @@ async function saveAllocation() {
     if (!window.ORACLE_IS_ADMIN) renderFreelancerDashboard();
     closeModal();
     toast(id ? 'Allocation updated' : 'Allocation created', 'success');
+    
+    // Auto-sync to cloud
+    syncData();
 }
 
 // ============================================================
@@ -3022,8 +3571,9 @@ function renderTeamPage() {
                             <td style="padding: 12px 16px;"><span class="badge ${m.role}">${m.role}</span></td>
                             <td style="padding: 12px 16px; font-family: var(--font-mono);">${m.currency === 'USD' ? '$' : 'R'}${m.hourlyRate}/hr</td>
                             <td style="padding: 12px 16px;"><span class="badge ${m.status}">${m.status}</span></td>
-                            <td style="padding: 12px 16px;">
+                            <td style="padding: 12px 16px; white-space: nowrap;">
                                 <button class="btn btn-sm btn-secondary" onclick="editTeamMember('${m.id}')">Edit</button>
+                                <button class="btn btn-sm" style="color: var(--danger); margin-left: 4px;" onclick="deleteTeamMember('${m.id}', '${escapeHtml(m.name)}')">Delete</button>
                             </td>
                         </tr>
                     `).join('')}
@@ -3069,15 +3619,161 @@ function renderTeamPage() {
     }
 }
 
-function showTeamMemberModal() {
-    toast('Team member editor coming soon', 'success');
+function showTeamMemberModal(id = null) {
+    const modal = document.getElementById('teamMemberModal');
+    if (!modal) { toast('Team member modal not found', 'error'); return; }
+    
+    document.getElementById('teamMemberModalTitle').textContent = id ? 'Edit Team Member' : 'Add Team Member';
+    document.getElementById('teamMemberId').value = id || '';
+    
+    if (id) {
+        const team = window.ORACLE_PRELOAD?.team || [];
+        const member = team.find(m => m.id === id);
+        if (member) {
+            document.getElementById('teamMemberName').value = member.name || '';
+            document.getElementById('teamMemberEmail').value = member.email || '';
+            document.getElementById('teamMemberRole').value = member.role || 'freelancer';
+            document.getElementById('teamMemberStatus').value = member.status || 'active';
+            document.getElementById('teamMemberRate').value = member.hourlyRate || '';
+            document.getElementById('teamMemberCurrency').value = member.currency || 'USD';
+            document.getElementById('teamMemberTitle').value = member.title || '';
+        }
+    } else {
+        document.getElementById('teamMemberName').value = '';
+        document.getElementById('teamMemberEmail').value = '';
+        document.getElementById('teamMemberRole').value = 'freelancer';
+        document.getElementById('teamMemberStatus').value = 'active';
+        document.getElementById('teamMemberRate').value = '';
+        document.getElementById('teamMemberCurrency').value = 'USD';
+        document.getElementById('teamMemberTitle').value = '';
+    }
+    
+    openModal('teamMemberModal');
+}
+
+async function saveTeamMember() {
+    const id = document.getElementById('teamMemberId').value;
+    const memberData = {
+        name: document.getElementById('teamMemberName').value.trim(),
+        email: document.getElementById('teamMemberEmail').value.trim().toLowerCase(),
+        role: document.getElementById('teamMemberRole').value,
+        status: document.getElementById('teamMemberStatus').value,
+        hourlyRate: parseFloat(document.getElementById('teamMemberRate').value) || 0,
+        currency: document.getElementById('teamMemberCurrency').value,
+        title: document.getElementById('teamMemberTitle').value.trim()
+    };
+    
+    if (!memberData.name || !memberData.email) {
+        toast('Name and email are required', 'error');
+        return;
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(memberData.email)) {
+        toast('Invalid email address', 'error');
+        return;
+    }
+    
+    // Initialize team array if needed
+    if (!window.ORACLE_PRELOAD.team) {
+        window.ORACLE_PRELOAD.team = [];
+    }
+    
+    if (id) {
+        // Update existing
+        const idx = window.ORACLE_PRELOAD.team.findIndex(m => m.id === id);
+        if (idx >= 0) {
+            window.ORACLE_PRELOAD.team[idx] = { ...window.ORACLE_PRELOAD.team[idx], ...memberData };
+        }
+    } else {
+        // Add new
+        const newMember = { 
+            ...memberData, 
+            id: crypto.randomUUID(), 
+            createdAt: new Date().toISOString() 
+        };
+        window.ORACLE_PRELOAD.team.push(newMember);
+        toast(`✅ ${memberData.name} can now log in with ${memberData.email}`, 'success');
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('oracle_team', JSON.stringify(window.ORACLE_PRELOAD.team));
+    
+    // Sync to Supabase
+    if (supabaseClient && currentUser) {
+        try {
+            const teamToSync = window.ORACLE_PRELOAD.team.map(m => ({
+                id: m.id,
+                user_id: currentUser.id,
+                name: m.name,
+                email: m.email,
+                role: m.role,
+                status: m.status,
+                hourly_rate: m.hourlyRate,
+                currency: m.currency,
+                title: m.title,
+                created_at: m.createdAt
+            }));
+            const { error } = await supabaseClient.from('team_members').upsert(teamToSync, { onConflict: 'id' });
+            if (error) console.warn('[Oracle] Team sync skipped (table may not exist):', error.message);
+        } catch (e) {
+            console.warn('[Oracle] Team sync failed:', e);
+        }
+    }
+    
+    // Re-render team page
+    renderTeamPage();
+    closeModal();
+    toast('Team member saved', 'success');
 }
 
 function editTeamMember(id) {
-    const team = window.ORACLE_PRELOAD?.team || [];
-    const member = team.find(m => m.id === id);
-    if (!member) { toast('Team member not found', 'error'); return; }
-    toast('Editing: ' + member.name + ' - Use Team page to update', 'success');
+    showTeamMemberModal(id);
+}
+
+async function deleteTeamMember(id, name) {
+    // Prevent deleting current user
+    const currentEmail = window.ORACLE_CURRENT_USER?.email;
+    const member = window.ORACLE_PRELOAD.team.find(m => m.id === id);
+    
+    if (member?.email.toLowerCase() === currentEmail?.toLowerCase()) {
+        toast('❌ Cannot delete your own account', 'error');
+        return;
+    }
+    
+    if (!confirm(`Remove ${name} from the team?\n\nThey will lose portal access immediately.`)) return;
+    
+    // Remove from team array
+    window.ORACLE_PRELOAD.team = window.ORACLE_PRELOAD.team.filter(m => m.id !== id);
+    
+    // Save to localStorage
+    localStorage.setItem('oracle_team', JSON.stringify(window.ORACLE_PRELOAD.team));
+    
+    // Remove from Supabase
+    if (supabaseClient && currentUser) {
+        try {
+            const { error } = await supabaseClient.from('team_members').delete().eq('id', id);
+            if (error) console.warn('[Oracle] Team member delete from Supabase failed:', error.message);
+        } catch (e) {
+            console.warn('[Oracle] Team member delete exception:', e);
+        }
+    }
+    
+    // Also remove any allocations for this member
+    const allocations = window.ORACLE_PRELOAD?.allocations || [];
+    const removedAllocations = allocations.filter(a => a.userId === id);
+    if (removedAllocations.length > 0) {
+        window.ORACLE_PRELOAD.allocations = allocations.filter(a => a.userId !== id);
+        localStorage.setItem('oracle_allocations', JSON.stringify(window.ORACLE_PRELOAD.allocations));
+        toast(`Removed ${name} and ${removedAllocations.length} allocation(s)`, 'success');
+    } else {
+        toast(`${name} removed from team`, 'success');
+    }
+    
+    // Re-render
+    renderTeamPage();
+    renderFinancialAnalyzer();
 }
 
 function editAllocation(id) {
@@ -3097,8 +3793,7 @@ function deleteAllocation(id) {
 // ============================================================
 // MEETINGS (Fireflies Integration)
 // ============================================================
-let meetings = [];
-let firefliesConnected = false;
+// meetings & firefliesConnected already declared at top of file
 
 function renderMeetingsPage() {
     // Load persisted meetings from localStorage if memory is empty
@@ -3230,7 +3925,7 @@ async function syncMeetings() {
             },
             body: JSON.stringify({
                 query: `query {
-                    transcripts(limit: 100) {
+                    transcripts(limit: 500) {
                         id
                         title
                         date
@@ -3794,7 +4489,59 @@ function setupLiveUpdates() {
         }
     }, 30000);
 
-    console.log('[Oracle] Live updates enabled (storage events + 30s polling)');
+    // Periodic sync for shared data (every 20 minutes)
+    setInterval(async () => {
+        if (!supabaseClient || !currentUser) return;
+        
+        console.log('[Oracle] Periodic sync: Pulling shared data from Supabase...');
+        
+        try {
+            // Sync time entries (shared across admins)
+            const { data: timeData } = await supabaseClient
+                .from('time_entries')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(100);
+            
+            if (timeData?.length) {
+                const localIds = new Set(timeEntries.map(t => t.id));
+                const newEntries = timeData.filter(t => !localIds.has(t.id));
+                if (newEntries.length > 0) {
+                    timeEntries = [...newEntries, ...timeEntries];
+                    localStorage.setItem('oracle_time_entries', JSON.stringify(timeEntries));
+                    renderTimeEntries();
+                    updateTodayTotal();
+                    console.log('[Oracle] Synced', newEntries.length, 'new time entries');
+                    if (window.ORACLE_IS_ADMIN) {
+                        toast(`↻ Synced ${newEntries.length} new time entries`, 'success');
+                    }
+                }
+            }
+            
+            // Sync projects/clients/invoices if admin
+            if (window.ORACLE_IS_ADMIN) {
+                const { data: projectData } = await supabaseClient
+                    .from('projects')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (projectData?.length) {
+                    const localIds = new Set(projects.map(p => p.id));
+                    const newProjects = projectData.filter(p => !localIds.has(p.id));
+                    if (newProjects.length > 0) {
+                        projects = [...projectData];
+                        localStorage.setItem('oracle_projects', JSON.stringify(projects));
+                        renderProjects();
+                        console.log('[Oracle] Synced projects');
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('[Oracle] Periodic sync failed:', e);
+        }
+    }, 20 * 60 * 1000); // 20 minutes
+
+    console.log('[Oracle] Live updates enabled (storage events + 30s polling + 20min sync)');
 }
 
 // ============================================================
@@ -3834,7 +4581,9 @@ window.deleteAllocation = deleteAllocation;
 window.renderFinancialAnalyzer = renderFinancialAnalyzer;
 window.renderTeamPage = renderTeamPage;
 window.showTeamMemberModal = showTeamMemberModal;
+window.saveTeamMember = saveTeamMember;
 window.editTeamMember = editTeamMember;
+window.deleteTeamMember = deleteTeamMember;
 window.editAllocation = editAllocation;
 window.connectFireflies = connectFireflies;
 window.syncMeetings = syncMeetings;
@@ -3855,12 +4604,14 @@ window.syncScannedData = syncScannedData;
 window.connectClickUp = connectClickUp;
 window.syncClickUpTeam = syncClickUpTeam;
 window.connectFirefliesFromSettings = connectFirefliesFromSettings;
+window.pullFromCloud = pullFromCloud;
 window.connectGoogleDrive = connectGoogleDrive;
 window.browseGoogleDrive = browseGoogleDrive;
 window.filterMeetingsByType = filterMeetingsByType;
 window.categorizeMeeting = categorizeMeeting;
 window.showMeetingDetailsPanel = showMeetingDetailsPanel;
 window.closeMeetingDetailsPanel = closeMeetingDetailsPanel;
+// expose askAI once
 window.askAI = askAI;
 
 // ============================================================
@@ -4212,10 +4963,4 @@ function showMeetingDetailsPanel(meetingId) {
 function closeMeetingDetailsPanel() {
     document.getElementById('meetingDetailsCard').style.display = 'none';
 }
-
-function askAI(query) {
-    document.getElementById('chatInput').value = query;
-    sendChat();
-}
-
 console.log('[Oracle] Ready');

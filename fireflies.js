@@ -169,14 +169,23 @@ class FirefliesIntegration {
             );
             
             if (wasPresent) {
-                meeting.summary.action_items.forEach(item => {
-                    actions.push({
-                        meetingId: meeting.id,
-                        meetingTitle: meeting.title,
-                        meetingDate: meeting.date,
-                        action: item,
-                        assignedTo: this.extractAssignee(item) || email
-                    });
+                // action_items can be string or array
+                const items = Array.isArray(meeting.summary.action_items) 
+                    ? meeting.summary.action_items 
+                    : (typeof meeting.summary.action_items === 'string' 
+                        ? [meeting.summary.action_items] 
+                        : []);
+                
+                items.forEach(item => {
+                    if (item && item.trim()) {
+                        actions.push({
+                            meetingId: meeting.id,
+                            meetingTitle: meeting.title,
+                            meetingDate: meeting.date,
+                            action: item,
+                            assignedTo: this.extractAssignee(item) || email
+                        });
+                    }
                 });
             }
         });

@@ -55,6 +55,7 @@ window.ORACLE_PRELOAD.invoices = [
 window.ORACLE_PRELOAD.team = [
     { id: 'shuaib', email: 'shuaib@exergydesigns.com', name: 'Shuaib Badat', role: 'admin', title: 'Founder & Lead Engineer', hourlyRate: 75, currency: 'USD', status: 'active' },
     { id: 'oracle', email: 'oracle@exergydesigns.com', name: 'Oracle', role: 'admin', title: 'AI Assistant', hourlyRate: 0, currency: 'USD', status: 'active' },
+    { id: 'shuaib-personal', email: 'shuaibnbadat@gmail.com', name: 'Shuaib Badat', role: 'freelancer', title: 'Founder (Personal Account)', hourlyRate: 75, currency: 'USD', status: 'active' },
     { id: 'ebrahim', email: 'ebrahim@exergydesigns.com', name: 'Ebrahim Malick', role: 'freelancer', title: 'Engineer', hourlyRate: 350, currency: 'ZAR', status: 'active' },
     { id: 'yusuf-m', email: 'yusuf.moola@exergydesigns.com', name: 'Yusuf Moola', role: 'freelancer', title: 'Engineer', hourlyRate: 350, currency: 'ZAR', status: 'active' },
     { id: 'bogdan', email: 'bogdan@exergydesigns.com', name: 'Bogdan Dirlosan', role: 'freelancer', title: 'CAD Specialist', hourlyRate: 25, currency: 'USD', status: 'active' },
@@ -68,20 +69,42 @@ window.ORACLE_PRELOAD.team = [
 window.ORACLE_PRELOAD.allocations = [];
 
 // ============================================================
-// UPWORK EARNINGS
+// UPWORK EARNINGS (Last updated: 2026-02-05)
 // ============================================================
 window.ORACLE_PRELOAD.upworkEarnings = [
-    { date: '2025-12-30', client: 'Ann Kelly', amount: 176.00 },
-    { date: '2025-12-30', client: 'Paul Kelly', amount: 120.00 },
-    { date: '2025-12-27', client: 'Aster De Vlack', amount: 950.00 },
-    { date: '2025-12-23', client: 'Ann Kelly', amount: 176.00 },
-    { date: '2025-12-23', client: 'Paul Kelly', amount: 240.00 },
-    { date: '2025-12-16', client: 'Ann Kelly', amount: 176.00 },
-    { date: '2025-12-16', client: 'Paul Kelly', amount: 240.00 },
-    { date: '2025-12-09', client: 'Ann Kelly', amount: 176.00 },
-    { date: '2025-12-09', client: 'Paul Kelly', amount: 240.00 },
-    { date: '2025-12-02', client: 'Ann Kelly', amount: 176.00 },
-    { date: '2025-12-02', client: 'Paul Kelly', amount: 360.00 }
+    // February 2026
+    { date: '2026-02-04', client: 'Smartmirror LLC', amount: 80.00, hours: 1.00 },
+    { date: '2026-02-04', client: 'Wes Lovegrove', amount: 270.00, hours: 6.00 },
+    { date: '2026-02-04', client: 'ABFP', amount: 1258.67, hours: 19.67 },
+    { date: '2026-02-04', client: 'EDGE Energy', amount: 1426.67, hours: 17.83 },
+    { date: '2026-02-04', client: 'Avi Greenboim', amount: 200.00, hours: 4.00 },
+    // January 2026
+    { date: '2026-01-23', client: 'Wes Lovegrove', amount: 195.00, hours: 4.33 },
+    { date: '2026-01-23', client: 'ABFP', amount: 1280.00, hours: 20.00 },
+    { date: '2026-01-23', client: 'EDGE Energy', amount: 1600.00, hours: 20.00 },
+    { date: '2026-01-23', client: 'Avi Greenboim', amount: 91.67, hours: 1.83 },
+    { date: '2026-01-21', client: 'Will', amount: 660.00, hours: 12.00 },
+    { date: '2026-01-21', client: 'Wes Lovegrove', amount: 352.50, hours: 7.83 },
+    { date: '2026-01-21', client: 'ABFP', amount: 650.67, hours: 10.17 },
+    { date: '2026-01-21', client: 'EDGE Energy', amount: 1600.00, hours: 20.00 },
+    { date: '2026-01-21', client: 'Avi Greenboim', amount: 33.33, hours: 0.67 },
+    { date: '2026-01-14', client: 'Will', amount: 265.83, hours: 4.83 },
+    { date: '2026-01-14', client: 'Justin K', amount: 240.00, hours: 3.00 },
+    { date: '2026-01-14', client: 'Wes Lovegrove', amount: 247.50, hours: 5.50 },
+    { date: '2026-01-14', client: 'ABFP', amount: 821.33, hours: 12.83 },
+    { date: '2026-01-14', client: 'EDGE Energy', amount: 853.33, hours: 10.67 },
+    { date: '2026-01-10', client: 'Tarek Sibai', amount: 40.00, hours: 0.63 },
+    { date: '2026-01-07', client: 'Wes Lovegrove', amount: 360.00, hours: 8.00 },
+    { date: '2026-01-07', client: 'ABFP', amount: 1258.67, hours: 19.67 },
+    { date: '2026-01-07', client: 'Johan Neethling', amount: 470.00, hours: 7.83 },
+    { date: '2026-01-07', client: 'EDGE Energy', amount: 1453.33, hours: 18.17 },
+    { date: '2026-01-03', client: 'Yusrie Lombard', amount: 2000.00, hours: 26.67 },
+    // December 2025
+    { date: '2025-12-31', client: 'Adel Alh', amount: 133.33, hours: 1.67 },
+    { date: '2025-12-26', client: 'ABFP', amount: 1269.33, hours: 19.83 },
+    { date: '2025-12-26', client: 'Johan Neethling', amount: 540.00, hours: 9.00 },
+    { date: '2025-12-26', client: 'EDGE Energy', amount: 1573.33, hours: 19.67 },
+    { date: '2025-12-26', client: 'Persy Booths UG', amount: 250.00, hours: 4.17 }
 ];
 
 // Calculate Upwork totals from earnings data
