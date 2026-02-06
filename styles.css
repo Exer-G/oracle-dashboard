@@ -612,3 +612,84 @@ body {
 .data-table tbody tr:hover {
     background: var(--grey-50);
 }
+
+/* ============================================================
+   SYNC INDICATOR (Cloud-First Mode)
+   ============================================================ */
+.sync-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 10000;
+    transition: all 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.sync-indicator.saving,
+.sync-indicator.saved,
+.sync-indicator.error {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.sync-indicator.saving {
+    background: var(--info);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.sync-indicator.saved {
+    background: var(--success);
+    color: white;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.sync-indicator.error {
+    background: var(--danger);
+    color: white;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.sync-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Cloud Status Badge */
+.cloud-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--grey-100);
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--grey-600);
+}
+
+.cloud-badge.synced {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success);
+}
+
+.cloud-badge svg {
+    width: 12px;
+    height: 12px;
+}
