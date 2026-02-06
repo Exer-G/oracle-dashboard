@@ -1,22 +1,28 @@
 // Oracle Dashboard Configuration
+// API keys hardcoded for production use
 const ORACLE_CONFIG = {
   // ClickUp Configuration
   clickup: {
     apiKey: 'pk_254571368_IDVBGBUNBFLCM1D5BVZ49UIDWJQK70M4',
-    exergyTeamId: '90121341501', // Only fetch from Exergy Designs
-    // Other teams (excluded): ABR Group: 90121337793, Air Battery: 90121324773
+    exergyTeamId: '90121341501',
   },
   
-  // Fireflies Configuration
+  // Fireflies Configuration (used via Netlify proxy)
   fireflies: {
     apiKey: 'd356c451-294e-4aac-8182-d1516e4d8890',
-    graphqlEndpoint: 'https://api.fireflies.ai/graphql'
+    graphqlEndpoint: '/.netlify/functions/fireflies-proxy'
   },
   
   // Yoco Payment Configuration
   yoco: {
     publicKey: 'pk_live_ed5bfee0TqjEHBb898a2',
+    secretKey: 'sk_live_960bfde0jbnrMb8797c3', // For server-side use
     defaultPaymentLink: 'https://pay.yoco.com/r/2QzZOv'
+  },
+  
+  // Claude AI Configuration  
+  claude: {
+    apiKey: '' // Add your Claude API key here if needed
   },
   
   // Company Info

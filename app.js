@@ -145,7 +145,10 @@ async function signInWithGoogle() {
     try {
         await supabaseClient.auth.signInWithOAuth({
             provider: 'google',
-            options: { redirectTo: window.location.origin + window.location.pathname }
+            options: { 
+                redirectTo: window.location.origin + window.location.pathname,
+                scopes: 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events'
+            }
         });
     } catch (err) {
         console.error('[Auth] Sign in error:', err);
@@ -312,6 +315,69 @@ async function loadAllData() {
     populateMeetingsClientFilter();
     loadScannedData();
     setupRealtimeSubscriptions();
+    
+    // Initialize calendar and invoice sync
+    initCalendarAndSync();
+}
+
+// ============================================================
+// CALENDAR & INVOICE SYNC INITIALIZATION
+// ============================================================
+async function initCalendarAndSync() {
+    console.log('[Oracle] Initializing calendar and sync modules...');
+    
+    // Load cached calendar events and render
+    if (typeof loadCachedCalendarEvents === 'function') {
+        const cached = loadCachedCalendarEvents();
+        if (cached.length > 0) {
+            renderCalendarWidget('calendarWidget');
+        }
+        
+        // Fetch fresh events in background
+        setTimeout(async () => {
+            try {
+                await initCalendar();
+                const events = await fetchCalendarEvents(14);
+                if (events.length > 0) {
+                    renderCalendarWidget('calendarWidget');
+                }
+            } catch (e) {
+                console.log('[Calendar] Could not fetch events:', e.message);
+            }
+        }, 2000);
+    }
+    
+    // Update invoice sync status
+    updateInvoiceSyncWidget();
+    
+    // Start auto-sync for invoices
+    if (typeof startAutoSync === 'function') {
+        startAutoSync();
+    }
+}
+
+function updateInvoiceSyncWidget() {
+    const statusText = document.getElementById('syncStatusText');
+    const syncedCount = document.getElementById('syncedCount');
+    const pendingCount = document.getElementById('pendingCount');
+    
+    if (typeof getInvoiceSyncStatus === 'function') {
+        const status = getInvoiceSyncStatus();
+        
+        if (syncedCount) syncedCount.textContent = status.synced || invoices.filter(i => i.synced_to_exerinv).length;
+        if (pendingCount) pendingCount.textContent = status.pending || invoices.filter(i => !i.synced_to_exerinv).length;
+        
+        const exerinvUrl = localStorage.getItem('oracle_exerinv_url');
+        if (statusText) {
+            if (exerinvUrl) {
+                statusText.textContent = status.lastSync ? `Last sync: ${new Date(status.lastSync).toLocaleTimeString()}` : 'Ready to sync';
+                statusText.style.color = 'var(--success)';
+            } else {
+                statusText.textContent = 'Not configured';
+                statusText.style.color = 'var(--grey-500)';
+            }
+        }
+    }
 }
 
 // ============================================================
@@ -3865,15 +3931,15 @@ async function connectFireflies() {
     settings.fireflies_api_key = apiKey;
     localStorage.setItem('fireflies_api_key', apiKey);
     
-    // Test connection by fetching user info
+    // Test connection by fetching user info (via proxy to bypass CORS)
     try {
-        const response = await fetch('https://api.fireflies.ai/graphql', {
+        const response = await fetch('/.netlify/functions/fireflies-proxy', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + apiKey
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
+                apiKey: apiKey,
                 query: `query { user { name email } }`
             })
         });
@@ -3917,13 +3983,13 @@ async function syncMeetings() {
     toast('Syncing meetings...', 'success');
     
     try {
-        const response = await fetch('https://api.fireflies.ai/graphql', {
+        const response = await fetch('/.netlify/functions/fireflies-proxy', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + apiKey
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
+                apiKey: apiKey,
                 query: `query {
                     transcripts(limit: 500) {
                         id

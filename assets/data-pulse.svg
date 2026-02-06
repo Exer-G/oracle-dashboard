@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" preserveAspectRatio="none">
+  <defs>
+    <linearGradient id="pulseGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c9a962" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#c9a962" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#c9a962" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="pulseGlow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Animated waveform -->
+  <path d="M 0 30 Q 25 30, 40 30 T 60 20 T 80 40 T 100 25 T 120 35 T 140 30 T 160 30 T 180 30 T 200 30" 
+        fill="none" stroke="url(#pulseGradient)" stroke-width="2" filter="url(#pulseGlow)">
+    <animate attributeName="d" 
+             values="M 0 30 Q 25 30, 40 30 T 60 20 T 80 40 T 100 25 T 120 35 T 140 30 T 160 30 T 180 30 T 200 30;
+                     M 0 30 Q 25 30, 40 35 T 60 25 T 80 35 T 100 30 T 120 20 T 140 40 T 160 30 T 180 30 T 200 30;
+                     M 0 30 Q 25 30, 40 25 T 60 35 T 80 25 T 100 40 T 120 30 T 140 20 T 160 35 T 180 30 T 200 30;
+                     M 0 30 Q 25 30, 40 30 T 60 20 T 80 40 T 100 25 T 120 35 T 140 30 T 160 30 T 180 30 T 200 30"
+             dur="3s" repeatCount="indefinite"/>
+  </path>
+  
+  <!-- Data points -->
+  <g fill="#e8c877">
+    <circle cx="60" cy="30" r="2" opacity="0.8">
+      <animate attributeName="cy" values="20;35;25;20" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.8;0.4;0.8" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="100" cy="30" r="2.5" opacity="0.9">
+      <animate attributeName="cy" values="25;30;40;25" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.9;0.5;0.9" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="140" cy="30" r="2" opacity="0.7">
+      <animate attributeName="cy" values="30;20;40;30" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.7;0.3;0.7" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+</svg>
