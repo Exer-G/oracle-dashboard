@@ -7,6 +7,7 @@ redirects = []
 publish = "."
 publishOrigin = "config"
 base = "."
+functions = "netlify/functions"
 
   [build.environment]
 
