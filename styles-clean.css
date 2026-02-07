@@ -90,8 +90,12 @@ body {
    LAYOUT
    ======================================== */
 .app {
-    display: block;
+    display: none;
     min-height: 100vh;
+}
+
+.app.visible {
+    display: block;
 }
 
 /* Sidebar */
