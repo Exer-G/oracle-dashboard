@@ -90,8 +90,7 @@ body {
    LAYOUT
    ======================================== */
 .app {
-    display: grid;
-    grid-template-columns: var(--sidebar-width) 1fr;
+    display: block;
     min-height: 100vh;
 }
 
