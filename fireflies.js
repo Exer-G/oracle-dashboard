@@ -5,16 +5,15 @@
 
 class FirefliesIntegration {
     constructor(apiKey) {
-        // Hardcoded API key as fallback
-        this.apiKey = apiKey || 'd356c451-294e-4aac-8182-d1516e4d8890';
-        this.endpoint = '/.netlify/functions/fireflies-proxy';
+        this.apiKey = apiKey;
+        this.endpoint = 'https://api.fireflies.ai/graphql';
         this.teammates = [];
         this.meetings = [];
         this.transcripts = new Map();
     }
     
     // ============================================================
-    // GraphQL Queries (via Netlify proxy to avoid CORS)
+    // GraphQL Queries
     // ============================================================
     
     async query(graphqlQuery, variables = {}) {
@@ -23,19 +22,13 @@ class FirefliesIntegration {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-API-Key': this.apiKey
+                    'Authorization': `Bearer ${this.apiKey}`
                 },
                 body: JSON.stringify({
                     query: graphqlQuery,
                     variables
                 })
             });
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('[Fireflies] API error:', response.status, errorText);
-                throw new Error(`Fireflies API error: ${response.status}`);
-            }
             
             const data = await response.json();
             if (data.errors) {

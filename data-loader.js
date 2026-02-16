@@ -181,40 +181,6 @@ window.ORACLE_PRELOAD.invoiceTotals = {
     countPaid: paidInvoices.length
 };
 
-// ============================================================
-// UPWORK OPPORTUNITIES (Auto-synced)
-// ============================================================
-window.ORACLE_PRELOAD.upworkOpportunities = [
-    {
-        "title": "Experienced CAD/Mechanical Designer for Precision Enclosure",
-        "hourlyRate": 90,
-        "description": "Create premium two-piece precision enclosure with DFM standards. CAD expertise required.",
-        "clientRating": 0,
-        "clientPaymentVerified": true,
-        "clientReviews": 0,
-        "clientSpent": 0,
-        "proposals": "Less than 5",
-        "url": "https://www.upwork.com/jobs/Experienced-CAD-Mechanical-Designer-for-Precision-Enclosure",
-        "posted": "5 minutes ago",
-        "scannedAt": "2026-02-05T22:26:47.154Z",
-        "score": 6
-    },
-    {
-        "title": "Product Design and Fabrication Documentation Specialist",
-        "hourlyRate": 90,
-        "description": "Industrial designer / CAD specialist for modular architectural system. Manufacturing-ready drawings required.",
-        "clientRating": 0,
-        "clientPaymentVerified": true,
-        "clientReviews": 0,
-        "clientSpent": 0,
-        "proposals": "Less than 5",
-        "url": "https://www.upwork.com/jobs/Product-Design-and-Fabrication-Documentation-Specialist",
-        "posted": "yesterday",
-        "scannedAt": "2026-02-05T22:26:47.154Z",
-        "score": 7
-    }
-];
-
 console.log('[Oracle] Data loaded:', {
     clients: window.ORACLE_PRELOAD.clients.length,
     invoices: window.ORACLE_PRELOAD.invoices.length,

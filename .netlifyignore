@@ -1,0 +1,7 @@
+time-tracker-desktop/node_modules
+time-tracker-desktop/dist
+time-tracker-desktop/.git
+time-tracker/node_modules
+node_modules
+*.exe
+*.zip

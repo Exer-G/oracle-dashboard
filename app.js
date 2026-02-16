@@ -67,6 +67,7 @@ let payments = [];
 let transactions = [];
 let timeEntries = [];
 let billingEntries = [];
+let trackerBlocks = []; // Time Tracker blocks from tt_time_blocks
 let settings = {};
 let firefliesIntegration = null;
 let teammates = [];
@@ -145,10 +146,7 @@ async function signInWithGoogle() {
     try {
         await supabaseClient.auth.signInWithOAuth({
             provider: 'google',
-            options: { 
-                redirectTo: window.location.origin + window.location.pathname,
-                scopes: 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events'
-            }
+            options: { redirectTo: window.location.origin + window.location.pathname }
         });
     } catch (err) {
         console.error('[Auth] Sign in error:', err);
@@ -302,9 +300,17 @@ async function loadAllData() {
         loadTransactions(),
         loadSettings(),
         loadTimeEntries(),
+        loadTrackerBlocks(),
+        loadTrackerTeamMembers(),
         initializeFireflies()
     ]);
-    
+
+    // Seed projects to Supabase if table is empty (one-time sync)
+    await seedProjectsToSupabase();
+
+    // Load allocations from Supabase user_settings
+    await loadAllocationsFromSupabase();
+
     updateDashboard();
     updateProjectDropdowns();
     updateClientDropdowns();
@@ -315,69 +321,6 @@ async function loadAllData() {
     populateMeetingsClientFilter();
     loadScannedData();
     setupRealtimeSubscriptions();
-    
-    // Initialize calendar and invoice sync
-    initCalendarAndSync();
-}
-
-// ============================================================
-// CALENDAR & INVOICE SYNC INITIALIZATION
-// ============================================================
-async function initCalendarAndSync() {
-    console.log('[Oracle] Initializing calendar and sync modules...');
-    
-    // Load cached calendar events and render
-    if (typeof loadCachedCalendarEvents === 'function') {
-        const cached = loadCachedCalendarEvents();
-        if (cached.length > 0) {
-            renderCalendarWidget('calendarWidget');
-        }
-        
-        // Fetch fresh events in background
-        setTimeout(async () => {
-            try {
-                await initCalendar();
-                const events = await fetchCalendarEvents(14);
-                if (events.length > 0) {
-                    renderCalendarWidget('calendarWidget');
-                }
-            } catch (e) {
-                console.log('[Calendar] Could not fetch events:', e.message);
-            }
-        }, 2000);
-    }
-    
-    // Update invoice sync status
-    updateInvoiceSyncWidget();
-    
-    // Start auto-sync for invoices
-    if (typeof startAutoSync === 'function') {
-        startAutoSync();
-    }
-}
-
-function updateInvoiceSyncWidget() {
-    const statusText = document.getElementById('syncStatusText');
-    const syncedCount = document.getElementById('syncedCount');
-    const pendingCount = document.getElementById('pendingCount');
-    
-    if (typeof getInvoiceSyncStatus === 'function') {
-        const status = getInvoiceSyncStatus();
-        
-        if (syncedCount) syncedCount.textContent = status.synced || invoices.filter(i => i.synced_to_exerinv).length;
-        if (pendingCount) pendingCount.textContent = status.pending || invoices.filter(i => !i.synced_to_exerinv).length;
-        
-        const exerinvUrl = localStorage.getItem('oracle_exerinv_url');
-        if (statusText) {
-            if (exerinvUrl) {
-                statusText.textContent = status.lastSync ? `Last sync: ${new Date(status.lastSync).toLocaleTimeString()}` : 'Ready to sync';
-                statusText.style.color = 'var(--success)';
-            } else {
-                statusText.textContent = 'Not configured';
-                statusText.style.color = 'var(--grey-500)';
-            }
-        }
-    }
 }
 
 // ============================================================
@@ -945,9 +888,278 @@ function loadLocalData() {
     // Load time entries from localStorage always
     timeEntries = JSON.parse(localStorage.getItem('oracle_time_entries') || '[]');
     billingEntries = JSON.parse(localStorage.getItem('oracle_billing_entries') || '[]');
+    // Load cached tracker blocks
+    trackerBlocks = JSON.parse(localStorage.getItem('oracle_tracker_blocks') || '[]');
     renderTimeEntries();
     updateTodayTotal();
     restoreTimerState();
+}
+
+// ============================================================
+// TIME TRACKER INTEGRATION (tt_time_blocks + tt_team_members)
+// ============================================================
+async function loadTrackerBlocks() {
+    if (!supabaseClient) return;
+
+    try {
+        // Load all approved/pending blocks from the time tracker (last 60 days)
+        const sixtyDaysAgo = new Date();
+        sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+        const { data, error } = await supabaseClient
+            .from('tt_time_blocks')
+            .select('*')
+            .gte('start_time', sixtyDaysAgo.toISOString())
+            .order('start_time', { ascending: false })
+            .limit(1000);
+
+        if (error) {
+            console.error('[Tracker Integration] Load blocks error:', error);
+            return;
+        }
+
+        trackerBlocks = data || [];
+        localStorage.setItem('oracle_tracker_blocks', JSON.stringify(trackerBlocks));
+        console.log('[Tracker Integration] Loaded', trackerBlocks.length, 'blocks from tt_time_blocks');
+    } catch (err) {
+        console.error('[Tracker Integration] Error:', err);
+    }
+}
+
+async function loadTrackerTeamMembers() {
+    if (!supabaseClient) return;
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('tt_team_members')
+            .select('*')
+            .order('name');
+
+        if (error) {
+            console.error('[Tracker Integration] Load team error:', error);
+            return;
+        }
+
+        if (data && data.length > 0) {
+            // Update ORACLE_PRELOAD.team with live Supabase data
+            window.ORACLE_PRELOAD.team = data.map(m => ({
+                id: m.id,
+                email: m.email,
+                name: m.name,
+                role: m.role,
+                title: m.title || '',
+                hourlyRate: parseFloat(m.hourly_rate) || 0,
+                currency: m.currency || 'USD',
+                status: m.status || 'active'
+            }));
+            console.log('[Tracker Integration] Synced', data.length, 'team members from tt_team_members');
+        }
+    } catch (err) {
+        console.error('[Tracker Integration] Team load error:', err);
+    }
+}
+
+function getTrackerSummary() {
+    // Aggregate tracker blocks into useful metrics for the dashboard
+    const team = window.ORACLE_PRELOAD?.team || [];
+    const now = new Date();
+    const startOfWeek = getStartOfWeek(now);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const weekBlocks = trackerBlocks.filter(b => new Date(b.start_time) >= startOfWeek);
+    const monthBlocks = trackerBlocks.filter(b => new Date(b.start_time) >= startOfMonth);
+
+    // Per-user weekly breakdown
+    const weeklyByUser = {};
+    weekBlocks.forEach(b => {
+        if (!weeklyByUser[b.user_id]) weeklyByUser[b.user_id] = { hours: 0, blocks: 0, cost: 0 };
+        const hours = (b.duration_seconds || 0) / 3600;
+        weeklyByUser[b.user_id].hours += hours;
+        weeklyByUser[b.user_id].blocks++;
+        weeklyByUser[b.user_id].cost += hours * (b.hourly_rate || 0);
+    });
+
+    // Total weekly team cost
+    const weeklyTeamHours = weekBlocks.reduce((s, b) => s + (b.duration_seconds || 0), 0) / 3600;
+    const weeklyTeamCost = weekBlocks.reduce((s, b) => {
+        const hours = (b.duration_seconds || 0) / 3600;
+        return s + (hours * (b.hourly_rate || 0));
+    }, 0);
+
+    // Monthly totals
+    const monthlyTeamHours = monthBlocks.reduce((s, b) => s + (b.duration_seconds || 0), 0) / 3600;
+
+    return {
+        weeklyTeamHours,
+        weeklyTeamCost,
+        monthlyTeamHours,
+        weeklyByUser,
+        totalBlocks: trackerBlocks.length,
+        weekBlocks: weekBlocks.length,
+        monthBlocks: monthBlocks.length
+    };
+}
+
+function getStartOfWeek(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday start
+    d.setDate(diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
+
+// ============================================================
+// SUPABASE PROJECT SEEDING & ALLOCATION SYNC
+// ============================================================
+async function seedProjectsToSupabase() {
+    if (!supabaseClient || !currentUser) return;
+
+    try {
+        // Check if Supabase projects table has any data
+        const { data: existing, error: checkError } = await supabaseClient
+            .from('projects')
+            .select('id')
+            .limit(1);
+
+        if (checkError) {
+            console.warn('[Seed] Could not check projects table:', checkError.message);
+            return;
+        }
+
+        if (existing && existing.length > 0) {
+            console.log('[Seed] Projects table already has data, skipping seed');
+            return;
+        }
+
+        // Table is empty — seed from local projects (localStorage or in-memory)
+        if (projects.length === 0) {
+            console.log('[Seed] No local projects to seed');
+            return;
+        }
+
+        console.log('[Seed] Seeding', projects.length, 'projects to Supabase...');
+
+        // Convert projects to valid Supabase format (ensure UUID IDs)
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const idMap = {}; // old ID -> new UUID mapping
+
+        const projectsToSeed = projects.map(p => {
+            let projectId = p.id;
+            if (!uuidRegex.test(projectId)) {
+                projectId = crypto.randomUUID();
+                idMap[p.id] = projectId;
+            }
+            return {
+                id: projectId,
+                name: p.name,
+                status: p.status || 'active',
+                hourly_rate: p.hourly_rate || null,
+                source: p.source || 'direct',
+                description: p.description || '',
+                user_id: currentUser.id,
+                created_at: p.created_at || new Date().toISOString()
+            };
+        });
+
+        const { error } = await supabaseClient.from('projects').insert(projectsToSeed);
+        if (error) {
+            console.error('[Seed] Project seed error:', error.message);
+            return;
+        }
+
+        // Update local projects with new UUIDs
+        if (Object.keys(idMap).length > 0) {
+            projects = projects.map(p => {
+                if (idMap[p.id]) {
+                    return { ...p, id: idMap[p.id] };
+                }
+                return p;
+            });
+            localStorage.setItem('oracle_projects', JSON.stringify(projects));
+            console.log('[Seed] Updated', Object.keys(idMap).length, 'project IDs to UUIDs');
+        }
+
+        console.log('[Seed] Successfully seeded', projectsToSeed.length, 'projects to Supabase');
+        toast('Projects synced to cloud', 'success');
+    } catch (err) {
+        console.error('[Seed] Error:', err);
+    }
+}
+
+async function loadAllocationsFromSupabase() {
+    if (!supabaseClient || !currentUser) return;
+
+    try {
+        // Load allocations from user_settings JSON field
+        const { data, error } = await supabaseClient
+            .from('user_settings')
+            .select('preferences')
+            .eq('user_id', currentUser.id)
+            .single();
+
+        if (error && error.code !== 'PGRST116') { // PGRST116 = not found
+            console.warn('[Allocations] Load error:', error.message);
+            return;
+        }
+
+        if (data?.preferences?.allocations) {
+            const cloudAllocations = data.preferences.allocations;
+            const localAllocations = window.ORACLE_PRELOAD?.allocations || [];
+
+            // Merge: cloud wins for existing IDs, keep local-only ones
+            const cloudIds = new Set(cloudAllocations.map(a => a.id));
+            const localOnly = localAllocations.filter(a => !cloudIds.has(a.id));
+            const merged = [...cloudAllocations, ...localOnly];
+
+            if (!window.ORACLE_PRELOAD) window.ORACLE_PRELOAD = {};
+            window.ORACLE_PRELOAD.allocations = merged;
+            localStorage.setItem('oracle_allocations', JSON.stringify(merged));
+            console.log('[Allocations] Loaded', cloudAllocations.length, 'allocations from Supabase');
+        } else {
+            // No cloud allocations, check localStorage
+            const local = JSON.parse(localStorage.getItem('oracle_allocations') || '[]');
+            if (local.length > 0) {
+                if (!window.ORACLE_PRELOAD) window.ORACLE_PRELOAD = {};
+                window.ORACLE_PRELOAD.allocations = local;
+                // Push local to cloud
+                await saveAllocationsToSupabase(local);
+            }
+        }
+    } catch (err) {
+        console.error('[Allocations] Load error:', err);
+    }
+}
+
+async function saveAllocationsToSupabase(allocations) {
+    if (!supabaseClient || !currentUser) return;
+
+    try {
+        // Save allocations as JSON in user_settings preferences
+        const { data: existing } = await supabaseClient
+            .from('user_settings')
+            .select('id, preferences')
+            .eq('user_id', currentUser.id)
+            .single();
+
+        const prefs = existing?.preferences || {};
+        prefs.allocations = allocations || window.ORACLE_PRELOAD?.allocations || [];
+
+        if (existing) {
+            await supabaseClient
+                .from('user_settings')
+                .update({ preferences: prefs })
+                .eq('user_id', currentUser.id);
+        } else {
+            await supabaseClient
+                .from('user_settings')
+                .insert({ user_id: currentUser.id, preferences: prefs });
+        }
+
+        console.log('[Allocations] Saved', prefs.allocations.length, 'allocations to Supabase');
+    } catch (err) {
+        console.error('[Allocations] Save error:', err);
+    }
 }
 
 // ============================================================
@@ -2015,11 +2227,15 @@ function updateDashboard() {
     // Active projects
     const activeProjects = projects.filter(p => p.status === 'active').length;
     
-    // Hours this week
-    const weeklyHours = timeEntries
+    // Hours this week (combine manual time entries + tracker blocks)
+    const weeklyHoursManual = timeEntries
         .filter(e => new Date(e.created_at) >= startOfWeek)
         .reduce((s, e) => s + e.duration, 0) / 3600;
-    
+
+    // Add tracker block hours (from tt_time_blocks)
+    const trackerSummary = getTrackerSummary();
+    const weeklyHours = weeklyHoursManual + (trackerSummary.weeklyTeamHours || 0);
+
     document.getElementById('statIncome').textContent = formatZAR(monthlyRevenue);
     document.getElementById('statOutstanding').textContent = formatZAR(outstanding);
     document.getElementById('statProjects').textContent = activeProjects;
@@ -2867,9 +3083,27 @@ async function syncData() {
     let synced = 0;
     let errors = 0;
     
-    // Sync projects
+    // Sync projects (convert non-UUID IDs to UUIDs for Supabase)
     if (projects.length > 0) {
-        const projectsToSync = projects.map(p => ({ ...p, user_id: currentUser.id }));
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const idMap = {};
+        const projectsToSync = projects.map(p => {
+            let projectId = p.id;
+            if (!uuidRegex.test(projectId)) {
+                projectId = crypto.randomUUID();
+                idMap[p.id] = projectId;
+            }
+            return {
+                id: projectId,
+                name: p.name,
+                status: p.status || 'active',
+                hourly_rate: p.hourly_rate || null,
+                source: p.source || 'direct',
+                description: p.description || '',
+                user_id: currentUser.id,
+                created_at: p.created_at || new Date().toISOString()
+            };
+        });
         try {
             console.log('[Oracle] Syncing', projectsToSync.length, 'projects to Supabase...');
             const { data, error } = await supabaseClient.from('projects').upsert(projectsToSync, { onConflict: 'id' });
@@ -2877,15 +3111,30 @@ async function syncData() {
                 console.error('[Oracle] Projects sync error:', error);
                 throw error;
             }
+            // Update local IDs if we converted any
+            if (Object.keys(idMap).length > 0) {
+                projects = projects.map(p => idMap[p.id] ? { ...p, id: idMap[p.id] } : p);
+                localStorage.setItem('oracle_projects', JSON.stringify(projects));
+                console.log('[Oracle] Converted', Object.keys(idMap).length, 'project IDs to UUIDs');
+            }
             synced++;
             console.log('[Oracle] ✅ Projects synced successfully:', projects.length);
-        } catch (e) { 
+        } catch (e) {
             console.error('[Oracle] ❌ Projects sync failed:', e.message || e);
             toast('⚠️ Projects sync failed: ' + (e.message || 'Unknown error'), 'error');
-            errors++; 
+            errors++;
         }
     } else {
         console.log('[Oracle] No projects to sync');
+    }
+
+    // Sync allocations to user_settings
+    try {
+        await saveAllocationsToSupabase();
+        synced++;
+    } catch (e) {
+        console.warn('[Oracle] Allocations sync failed:', e);
+        errors++;
     }
     
     // Sync clients
@@ -3266,6 +3515,63 @@ function renderFinancialAnalyzer() {
         `;
     }
     
+    // Tracker Team Costs (live from desktop tracker)
+    const trackerCostsContainer = document.getElementById('analyzerTrackerCosts');
+    if (trackerCostsContainer) {
+        const trackerSummary = getTrackerSummary();
+        const team = window.ORACLE_PRELOAD?.team || [];
+
+        if (trackerSummary.weekBlocks > 0) {
+            // Build per-user breakdown
+            const userRows = Object.entries(trackerSummary.weeklyByUser).map(([userId, data]) => {
+                const member = team.find(m => m.id === userId || m.email === userId);
+                const name = member ? member.name : userId;
+                const rate = member ? member.hourlyRate : 0;
+                const currency = member ? (member.currency === 'USD' ? '$' : 'R') : '$';
+                const cost = data.hours * rate;
+                return { name, hours: data.hours, blocks: data.blocks, rate, currency, cost };
+            }).sort((a, b) => b.hours - a.hours);
+
+            trackerCostsContainer.innerHTML = `
+                <div style="padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; background: var(--grey-50);">
+                    <div>
+                        <div style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Weekly Team Hours</div>
+                        <div style="font-size: 24px; font-weight: 700; font-family: var(--font-mono);">${trackerSummary.weeklyTeamHours.toFixed(1)}h</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Weekly Team Cost</div>
+                        <div style="font-size: 24px; font-weight: 700; font-family: var(--font-mono); color: var(--danger);">$${trackerSummary.weeklyTeamCost.toFixed(0)}</div>
+                    </div>
+                </div>
+                <table class="data-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 12px 16px; text-align: left;">Member</th>
+                            <th style="padding: 12px 16px; text-align: center;">Blocks</th>
+                            <th style="padding: 12px 16px; text-align: right;">Hours</th>
+                            <th style="padding: 12px 16px; text-align: right;">Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${userRows.map(u => `
+                            <tr>
+                                <td style="padding: 12px 16px; font-weight: 500;">${escapeHtml(u.name)}</td>
+                                <td style="padding: 12px 16px; text-align: center; font-family: var(--font-mono);">${u.blocks}</td>
+                                <td style="padding: 12px 16px; text-align: right; font-family: var(--font-mono);">${u.hours.toFixed(1)}h</td>
+                                <td style="padding: 12px 16px; text-align: right; font-family: var(--font-mono); font-weight: 600;">${u.currency}${u.cost.toFixed(0)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <div style="padding: 12px 16px; font-size: 12px; color: var(--text-secondary); border-top: 1px solid var(--border);">
+                    Monthly total: ${trackerSummary.monthlyTeamHours.toFixed(1)}h across ${trackerSummary.monthBlocks} blocks
+                </div>
+            `;
+        } else {
+            trackerCostsContainer.innerHTML = '<div class="empty-state"><p>No tracker data this week. Team members need to track time using Oracle Tracker desktop app.</p></div>';
+        }
+    }
+
     // Recent Earnings
     const recentContainer = document.getElementById('analyzerRecentEarnings');
     if (recentContainer && earnings.length) {
@@ -3458,28 +3764,8 @@ async function saveAllocation() {
     // Persist to localStorage
     localStorage.setItem('oracle_allocations', JSON.stringify(window.ORACLE_PRELOAD.allocations));
 
-    // Sync to Supabase
-    if (supabaseClient && currentUser) {
-        try {
-            const dbAlloc = {
-                id: allocation.id,
-                user_id: currentUser.id,
-                team_member_id: allocation.userId,
-                team_member_name: allocation.userName,
-                project_name: allocation.project,
-                project_id: allocation.projectId?.startsWith('client_') ? null : allocation.projectId,
-                hours_per_week: allocation.hoursPerWeek,
-                hourly_rate: allocation.rate,
-                currency: allocation.currency,
-                status: allocation.status,
-                weekly_estimate: allocation.weeklyEstimate
-            };
-            const { error } = await supabaseClient.from('allocations').upsert(dbAlloc, { onConflict: 'id' });
-            if (error) console.warn('[Oracle] Allocation Supabase sync skipped (table may not exist):', error.message);
-        } catch (e) {
-            console.warn('[Oracle] Allocation Supabase sync failed:', e);
-        }
-    }
+    // Sync allocations to Supabase (via user_settings JSON)
+    await saveAllocationsToSupabase(window.ORACLE_PRELOAD.allocations);
 
     // Re-render
     renderTeamPage();
@@ -3591,16 +3877,20 @@ function renderTeamPage() {
     const team = window.ORACLE_PRELOAD.team || [];
     const allocations = window.ORACLE_PRELOAD.allocations || [];
     
+    // Get tracker summary for live hours data
+    const trackerSummary = getTrackerSummary();
+
     // Calculate stats
     const activeMembers = team.filter(m => m.status === 'active' && m.role === 'freelancer');
     const totalCapacity = activeMembers.reduce((sum, m) => sum + 40, 0); // Assume 40h/week capacity
     const allocatedHours = allocations.filter(a => a.status === 'active').reduce((sum, a) => sum + a.hoursPerWeek, 0);
+    const trackedThisWeek = trackerSummary.weeklyTeamHours || 0;
     const availableHours = totalCapacity - allocatedHours;
-    
+
     // Update stats
     document.getElementById('teamTotalMembers')?.textContent && (document.getElementById('teamTotalMembers').textContent = team.length);
     document.getElementById('teamTotalCapacity')?.textContent && (document.getElementById('teamTotalCapacity').textContent = totalCapacity + 'h');
-    document.getElementById('teamAllocatedHours')?.textContent && (document.getElementById('teamAllocatedHours').textContent = allocatedHours + 'h');
+    document.getElementById('teamAllocatedHours')?.textContent && (document.getElementById('teamAllocatedHours').textContent = trackedThisWeek.toFixed(1) + 'h');
     document.getElementById('teamAvailableHours')?.textContent && (document.getElementById('teamAvailableHours').textContent = availableHours + 'h');
     document.getElementById('teamBadge')?.textContent && (document.getElementById('teamBadge').textContent = team.length);
     
@@ -3615,12 +3905,17 @@ function renderTeamPage() {
                         <th style="padding: 12px 16px;">Email</th>
                         <th style="padding: 12px 16px;">Role</th>
                         <th style="padding: 12px 16px;">Rate</th>
+                        <th style="padding: 12px 16px;">This Week</th>
                         <th style="padding: 12px 16px;">Status</th>
                         <th style="padding: 12px 16px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${team.map(m => `
+                    ${team.map(m => {
+                        const userTracker = trackerSummary.weeklyByUser[m.id] || trackerSummary.weeklyByUser[m.email] || { hours: 0, blocks: 0, cost: 0 };
+                        const weekHours = userTracker.hours;
+                        const weekCost = weekHours * (m.hourlyRate || 0);
+                        return `
                         <tr>
                             <td style="padding: 12px 16px;">
                                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -3636,13 +3931,17 @@ function renderTeamPage() {
                             <td style="padding: 12px 16px; font-size: 13px;">${escapeHtml(m.email)}</td>
                             <td style="padding: 12px 16px;"><span class="badge ${m.role}">${m.role}</span></td>
                             <td style="padding: 12px 16px; font-family: var(--font-mono);">${m.currency === 'USD' ? '$' : 'R'}${m.hourlyRate}/hr</td>
+                            <td style="padding: 12px 16px; font-family: var(--font-mono);">
+                                <div style="font-weight: 600;">${weekHours.toFixed(1)}h</div>
+                                ${weekCost > 0 ? `<div style="font-size: 11px; color: var(--text-secondary);">${m.currency === 'USD' ? '$' : 'R'}${weekCost.toFixed(0)}</div>` : ''}
+                            </td>
                             <td style="padding: 12px 16px;"><span class="badge ${m.status}">${m.status}</span></td>
                             <td style="padding: 12px 16px; white-space: nowrap;">
                                 <button class="btn btn-sm btn-secondary" onclick="editTeamMember('${m.id}')">Edit</button>
                                 <button class="btn btn-sm" style="color: var(--danger); margin-left: 4px;" onclick="deleteTeamMember('${m.id}', '${escapeHtml(m.name)}')">Delete</button>
                             </td>
                         </tr>
-                    `).join('')}
+                    `;}).join('')}
                 </tbody>
             </table>
         `;
@@ -3931,15 +4230,15 @@ async function connectFireflies() {
     settings.fireflies_api_key = apiKey;
     localStorage.setItem('fireflies_api_key', apiKey);
     
-    // Test connection by fetching user info (via proxy to bypass CORS)
+    // Test connection by fetching user info
     try {
-        const response = await fetch('/.netlify/functions/fireflies-proxy', {
+        const response = await fetch('https://api.fireflies.ai/graphql', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + apiKey
             },
             body: JSON.stringify({
-                apiKey: apiKey,
                 query: `query { user { name email } }`
             })
         });
@@ -3983,13 +4282,13 @@ async function syncMeetings() {
     toast('Syncing meetings...', 'success');
     
     try {
-        const response = await fetch('/.netlify/functions/fireflies-proxy', {
+        const response = await fetch('https://api.fireflies.ai/graphql', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + apiKey
             },
             body: JSON.stringify({
-                apiKey: apiKey,
                 query: `query {
                     transcripts(limit: 500) {
                         id
@@ -4584,6 +4883,18 @@ function setupLiveUpdates() {
                 }
             }
             
+            // Sync tracker blocks (from desktop time tracker app)
+            try {
+                await loadTrackerBlocks();
+                await loadTrackerTeamMembers();
+                updateDashboard();
+                renderTeamPage();
+                renderFinancialAnalyzer();
+                console.log('[Oracle] Tracker data synced');
+            } catch (e) {
+                console.warn('[Oracle] Tracker sync failed:', e);
+            }
+
             // Sync projects/clients/invoices if admin
             if (window.ORACLE_IS_ADMIN) {
                 const { data: projectData } = await supabaseClient

@@ -11,36 +11,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://apis.google.com/js/api.js"></script>
     <script src="config.js"></script>
     <script src="clickup.js"></script>
     <script src="gdrive.js"></script>
     <script src="csv-parser.js"></script>
     <script src="fireflies.js"></script>
-    <script src="calendar.js"></script>
-    <script src="invoice-sync.js"></script>
-    <link rel="stylesheet" href="styles-clean.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- SVG Definitions for Progress Rings -->
-    <svg width="0" height="0" style="position: absolute;">
-        <defs>
-            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#c9a962" />
-                <stop offset="50%" style="stop-color:#e8c877" />
-                <stop offset="100%" style="stop-color:#a68b4a" />
-            </linearGradient>
-            <linearGradient id="progressGradientGreen" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#22c55e" />
-                <stop offset="100%" style="stop-color:#16a34a" />
-            </linearGradient>
-            <linearGradient id="progressGradientBlue" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#3b82f6" />
-                <stop offset="100%" style="stop-color:#2563eb" />
-            </linearGradient>
-        </defs>
-    </svg>
-
     <!-- Login Screen -->
     <div class="login-screen" id="loginScreen">
         <div class="login-card">
@@ -274,65 +252,6 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Calendar & Sync Widget Row -->
-                    <div class="grid-2" style="margin-top: 24px;">
-                        <div class="card">
-                            <div class="card-header">
-                                <div>
-                                    <div class="card-title">📅 Upcoming Events</div>
-                                    <div class="card-subtitle">Google Calendar</div>
-                                </div>
-                                <button class="btn btn-sm btn-secondary" onclick="syncCalendar()" title="Sync Calendar">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                </button>
-                            </div>
-                            <div class="card-body" id="calendarWidget">
-                                <div class="empty-state" style="padding: 24px; text-align: center;">
-                                    <div style="font-size: 32px; margin-bottom: 8px;">📅</div>
-                                    <p style="color: var(--grey-500); font-size: 13px; margin-bottom: 12px;">Calendar not synced</p>
-                                    <button onclick="syncCalendar()" class="btn btn-sm btn-secondary">Connect Calendar</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card">
-                            <div class="card-header">
-                                <div>
-                                    <div class="card-title">🔄 Invoice Sync</div>
-                                    <div class="card-subtitle">Exerinv Integration</div>
-                                </div>
-                                <button class="btn btn-sm btn-secondary" onclick="syncAllInvoices()" title="Sync Invoices">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                </button>
-                            </div>
-                            <div class="card-body" id="invoiceSyncWidget">
-                                <div class="sync-status" style="padding: 16px;">
-                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                                        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--accent-gold), var(--copper)); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                                            <span style="font-size: 24px;">📄</span>
-                                        </div>
-                                        <div>
-                                            <div style="font-weight: 600; font-size: 14px;">Invoice Generator</div>
-                                            <div style="font-size: 12px; color: var(--grey-500);" id="syncStatusText">Not configured</div>
-                                        </div>
-                                    </div>
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                                        <div style="background: var(--grey-800); padding: 12px; border-radius: 8px; text-align: center;">
-                                            <div style="font-size: 20px; font-weight: 600; color: var(--accent-gold);" id="syncedCount">0</div>
-                                            <div style="font-size: 11px; color: var(--grey-500); text-transform: uppercase;">Synced</div>
-                                        </div>
-                                        <div style="background: var(--grey-800); padding: 12px; border-radius: 8px; text-align: center;">
-                                            <div style="font-size: 20px; font-weight: 600; color: var(--info);" id="pendingCount">0</div>
-                                            <div style="font-size: 11px; color: var(--grey-500); text-transform: uppercase;">Pending</div>
-                                        </div>
-                                    </div>
-                                    <button onclick="navigateTo('settings'); setTimeout(() => document.getElementById('invoiceSyncSettings')?.scrollIntoView(), 100);" class="btn btn-sm btn-secondary" style="width: 100%; margin-top: 16px;">
-                                        Configure Sync
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </section>
                 
                 <!-- Projects Page -->
@@ -532,6 +451,16 @@
                         </div>
                     </div>
                     
+                    <!-- Tracker Team Costs (live from desktop app) -->
+                    <div class="card" id="analyzerTrackerCostsCard">
+                        <div class="card-header">
+                            <div><div class="card-title">🖥 Tracker Team Costs</div><div class="card-subtitle">Live hours from desktop time tracker</div></div>
+                        </div>
+                        <div class="card-body flush" id="analyzerTrackerCosts">
+                            <div class="loading"><div class="spinner"></div>Loading...</div>
+                        </div>
+                    </div>
+
                     <!-- Recent Upwork Earnings -->
                     <div class="card">
                         <div class="card-header">
@@ -557,9 +486,9 @@
                             <div class="stat-change positive">Per week</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-header"><span class="stat-label">Allocated Hours</span></div>
+                            <div class="stat-header"><span class="stat-label">Tracked This Week</span></div>
                             <div class="stat-value" id="teamAllocatedHours">0h</div>
-                            <div class="stat-change positive">Assigned</div>
+                            <div class="stat-change positive">From time tracker</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-header"><span class="stat-label">Available Hours</span></div>
@@ -977,12 +906,7 @@
                                 <div class="form-group">
                                     <label class="form-label">Google OAuth Client ID</label>
                                     <input type="text" class="form-input" id="gdriveClientId" placeholder="xxx.apps.googleusercontent.com">
-                                    <p class="form-hint" style="color: var(--text-muted); font-size: 12px; margin-top: 8px; line-height: 1.6;">
-                                        <strong>Setup:</strong> 
-                                        <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: var(--accent);">Google Cloud Console</a> → 
-                                        Create Project → Enable Drive API → Create OAuth 2.0 Client ID (Web app) → 
-                                        Add <code style="background: var(--bg-elevated); padding: 2px 6px; border-radius: 4px;">${window.location.origin}</code> as Authorized JavaScript origin
-                                    </p>
+                                    <p class="form-hint">Create at console.cloud.google.com → APIs & Services → Credentials</p>
                                 </div>
                                 <div style="display: flex; gap: 8px;">
                                     <button class="btn btn-primary" onclick="connectGoogleDrive()">Connect Google Drive</button>
@@ -1008,37 +932,6 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="card" id="invoiceSyncSettings">
-                            <div class="card-header"><div class="card-title">🔄 Invoice Sync (Exerinv)</div></div>
-                            <div class="card-body">
-                                <div class="form-group">
-                                    <label class="form-label">Exerinv URL</label>
-                                    <input type="url" class="form-input" id="exerinvUrl" placeholder="https://exerinv.netlify.app">
-                                    <p class="form-hint">Your invoice generator deployment URL</p>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">API Token (optional)</label>
-                                    <input type="password" class="form-input" id="exerinvToken" placeholder="Your Exerinv API token">
-                                    <p class="form-hint">For bi-directional sync</p>
-                                </div>
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="btn btn-primary" onclick="saveInvoiceSyncSettings()">Save Settings</button>
-                                    <button class="btn btn-secondary" onclick="syncAllInvoices()">Sync Now</button>
-                                </div>
-                                <div class="status-box" id="invoiceSyncStatus" style="margin-top: 12px;">Not configured</div>
-                            </div>
-                        </div>
-                        <div class="card">
-                            <div class="card-header"><div class="card-title">📅 Google Calendar</div></div>
-                            <div class="card-body">
-                                <p class="form-hint" style="margin-bottom: 12px;">Calendar access is granted through your Google sign-in. Re-sign in to grant calendar permissions if needed.</p>
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="btn btn-primary" onclick="syncCalendar()">Sync Calendar</button>
-                                    <button class="btn btn-secondary" onclick="signInWithGoogle()">Re-authorize</button>
-                                </div>
-                                <div class="status-box" id="calendarStatus" style="margin-top: 12px;">Not synced</div>
-                            </div>
-                        </div>
                     </div>
                     <div class="card" style="margin-top: 20px;">
                         <div class="card-header"><div class="card-title">🔗 Connection Status</div></div>
@@ -1050,8 +943,6 @@
                             <div class="status-box error" id="firefliesStatusMain">✗ Fireflies not connected</div>
                             <div class="status-box error" id="gdriveStatusMain">✗ Google Drive not connected</div>
                             <div class="status-box error" id="wiseStatus">✗ Wise not configured</div>
-                            <div class="status-box error" id="calendarStatusMain">✗ Calendar not synced</div>
-                            <div class="status-box error" id="invoiceSyncStatusMain">✗ Invoice sync not configured</div>
                         </div>
                     </div>
                 </section>
@@ -1454,6 +1345,5 @@
     <!-- Preloaded financial data -->
     <script src="data-loader.js"></script>
     <script src="app.js"></script>
-
 </body>
 </html>

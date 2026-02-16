@@ -1,12 +1,15 @@
+functionsDirectory = "C:\\Users\\shuai\\Downloads\\oracle 7\\netlify\\functions"
 functionsDirectoryOrigin = "config-v1"
 headersOrigin = "config"
+redirectsOrigin = "config"
 plugins = []
 redirects = []
 
 [build]
-publish = "."
+publish = "C:\\Users\\shuai\\Downloads\\oracle 7"
 publishOrigin = "config"
-base = "."
+base = "C:\\Users\\shuai\\Downloads\\oracle 7"
+functions = "C:\\Users\\shuai\\Downloads\\oracle 7\\netlify\\functions"
 
   [build.environment]
 

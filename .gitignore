@@ -15,3 +15,9 @@ data/*.csv
 data/api_keys.json
 credentials.json
 token.json
+.claude/
+*.exe
+*.zip
+*.blockmap
+nul
+supabase_schema.json
