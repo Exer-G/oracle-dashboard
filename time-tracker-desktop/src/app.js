@@ -1245,11 +1245,11 @@ async function syncProjectsAndAllocations() {
 
         // 3. Sync allocations from user_settings
         if (currentUser) {
-            const { data: settingsData } = await supabaseClient
+            const { data: settingsRows } = await supabaseClient
                 .from('user_settings')
                 .select('preferences')
-                .eq('user_id', currentUser.id)
-                .single();
+                .eq('user_id', currentUser.id);
+            const settingsData = settingsRows && settingsRows.length > 0 ? settingsRows[0] : null;
 
             if (settingsData?.preferences?.allocations) {
                 localStorage.setItem('tt_allocations', JSON.stringify(settingsData.preferences.allocations));

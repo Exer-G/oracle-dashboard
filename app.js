@@ -4073,7 +4073,7 @@ async function saveTeamMember() {
                 title: m.title,
                 created_at: m.createdAt
             }));
-            const { error } = await supabaseClient.from('team_members').upsert(teamToSync, { onConflict: 'id' });
+            const { error } = await supabaseClient.from('tt_team_members').upsert(teamToSync, { onConflict: 'id' });
             if (error) console.warn('[Oracle] Team sync skipped (table may not exist):', error.message);
         } catch (e) {
             console.warn('[Oracle] Team sync failed:', e);
@@ -4111,7 +4111,7 @@ async function deleteTeamMember(id, name) {
     // Remove from Supabase
     if (supabaseClient && currentUser) {
         try {
-            const { error } = await supabaseClient.from('team_members').delete().eq('id', id);
+            const { error } = await supabaseClient.from('tt_team_members').delete().eq('id', id);
             if (error) console.warn('[Oracle] Team member delete from Supabase failed:', error.message);
         } catch (e) {
             console.warn('[Oracle] Team member delete exception:', e);
