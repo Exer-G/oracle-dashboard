@@ -3,8 +3,8 @@
  * Bypasses CORS restrictions by proxying requests server-side
  */
 
-// Hardcoded API key - production use
-const FIREFLIES_API_KEY = 'd356c451-294e-4aac-8182-d1516e4d8890';
+// API key from environment variable
+const FIREFLIES_API_KEY = process.env.FIREFLIES_API_KEY || '';
 
 exports.handler = async (event) => {
     const headers = {
@@ -26,8 +26,8 @@ exports.handler = async (event) => {
         const body = JSON.parse(event.body);
         const { query, variables } = body;
         
-        // Get API key from header, body, or use hardcoded fallback
-        const apiKey = event.headers['x-api-key'] || body.apiKey || FIREFLIES_API_KEY;
+        // Get API key from environment variable
+        const apiKey = FIREFLIES_API_KEY;
 
         if (!query) {
             return { statusCode: 400, headers, body: JSON.stringify({ error: 'GraphQL query required' }) };

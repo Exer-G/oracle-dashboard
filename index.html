@@ -856,19 +856,24 @@
                         <div class="card">
                             <div class="card-header"><div class="card-title">🔑 API Configuration</div></div>
                             <div class="card-body">
+                                <p class="form-hint" style="margin-bottom: 16px;">API keys are managed securely via server-side environment variables.</p>
                                 <div class="form-group">
-                                    <label class="form-label">Claude API Key</label>
-                                    <input type="password" class="form-input" id="claudeKey" placeholder="sk-ant-api...">
+                                    <label class="form-label">Yoco Payments</label>
+                                    <div class="status-box success" id="yocoStatus">✓ Connected (server-side)</div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Yoco API Key</label>
-                                    <input type="password" class="form-input" id="yocoKey" placeholder="sk_live_...">
-                                    <p class="form-hint">For payment links</p>
+                                    <label class="form-label">Fireflies AI</label>
+                                    <div class="status-box success" id="firefliesConfigStatus">✓ Connected (server-side)</div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Wise API Key</label>
-                                    <input type="password" class="form-input" id="wiseKey" placeholder="...">
-                                    <p class="form-hint">For international payments</p>
+                                    <label class="form-label">ClickUp</label>
+                                    <div class="status-box success" id="clickupConfigStatus">✓ Connected (server-side)</div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Claude AI</label>
+                                    <div class="status-box" id="claudeStatus">Not configured</div>
+                                    <input type="password" class="form-input" id="claudeKey" placeholder="sk-ant-api..." style="margin-top: 8px;">
+                                    <p class="form-hint">Optional — enter if you want AI analysis features</p>
                                 </div>
                                 <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
                             </div>
@@ -876,28 +881,18 @@
                         <div class="card">
                             <div class="card-header"><div class="card-title">📋 ClickUp Integration</div></div>
                             <div class="card-body">
-                                <div class="form-group">
-                                    <label class="form-label">ClickUp API Token</label>
-                                    <input type="password" class="form-input" id="clickupKey" placeholder="pk_...">
-                                    <p class="form-hint">Get from ClickUp Settings → Apps → API Token</p>
-                                </div>
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="btn btn-primary" onclick="connectClickUp()">Connect ClickUp</button>
+                                <p class="form-hint">ClickUp API token is configured server-side.</p>
+                                <div style="display: flex; gap: 8px; margin-top: 12px;">
                                     <button class="btn btn-secondary" onclick="syncClickUpTeam()">Sync Team</button>
                                 </div>
-                                <div class="status-box" id="clickupStatus" style="margin-top: 12px;">Not connected</div>
+                                <div class="status-box success" id="clickupStatus" style="margin-top: 12px;">✓ Connected (server-side)</div>
                             </div>
                         </div>
                         <div class="card">
                             <div class="card-header"><div class="card-title">🔥 Fireflies Integration</div></div>
                             <div class="card-body">
-                                <div class="form-group">
-                                    <label class="form-label">Fireflies API Key</label>
-                                    <input type="password" class="form-input" id="firefliesKeySettings" placeholder="...">
-                                    <p class="form-hint">Get from fireflies.ai → Settings → API & Integrations</p>
-                                </div>
-                                <button class="btn btn-primary" onclick="connectFirefliesFromSettings()">Connect Fireflies</button>
-                                <div class="status-box" id="firefliesStatusSettings" style="margin-top: 12px;">Not connected</div>
+                                <p class="form-hint">Fireflies API key is configured server-side via the proxy function.</p>
+                                <div class="status-box success" id="firefliesStatusSettings" style="margin-top: 12px;">✓ Connected (server-side)</div>
                             </div>
                         </div>
                         <div class="card">

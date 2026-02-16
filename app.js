@@ -328,13 +328,13 @@ async function loadAllData() {
 // ============================================================
 async function initializeFireflies() {
     try {
-        if (!window.ORACLE_CONFIG?.fireflies?.apiKey) {
-            console.log('[Fireflies] No API key configured');
+        if (!window.ORACLE_CONFIG?.fireflies?.graphqlEndpoint) {
+            console.log('[Fireflies] No endpoint configured');
             return;
         }
         
         console.log('[Fireflies] Initializing...');
-        firefliesIntegration = new FirefliesIntegration(window.ORACLE_CONFIG.fireflies.apiKey);
+        firefliesIntegration = new FirefliesIntegration(null);
         
         // Check last sync time to avoid rate limits
         const lastSync = parseInt(localStorage.getItem('fireflies_last_sync') || '0');
@@ -843,8 +843,6 @@ async function loadSettings() {
 
 function applySettings() {
     if (settings.claude_api_key) document.getElementById('claudeKey').value = settings.claude_api_key;
-    if (settings.yoco_api_key) document.getElementById('yocoKey').value = settings.yoco_api_key;
-    if (settings.wise_api_key) document.getElementById('wiseKey').value = settings.wise_api_key;
     if (settings.default_hourly_rate) document.getElementById('defaultRate').value = settings.default_hourly_rate;
     if (settings.default_exchange_rate) document.getElementById('exchangeRate').value = settings.default_exchange_rate;
     if (settings.default_payment_terms) document.getElementById('paymentTerms').value = settings.default_payment_terms;
@@ -856,8 +854,6 @@ async function saveSettings() {
     const newSettings = {
         user_id: currentUser?.id,
         claude_api_key: document.getElementById('claudeKey')?.value.trim() || '',
-        yoco_api_key: document.getElementById('yocoKey')?.value.trim() || '',
-        wise_api_key: document.getElementById('wiseKey')?.value.trim() || '',
         default_hourly_rate: parseFloat(document.getElementById('defaultRate')?.value) || 64,
         default_exchange_rate: parseFloat(document.getElementById('exchangeRate')?.value) || 18.5,
         default_payment_terms: parseInt(document.getElementById('paymentTerms')?.value) || 7
@@ -879,9 +875,6 @@ async function saveSettings() {
 function updateSettingsStatus() {
     document.getElementById('claudeStatus').className = `status-box ${settings.claude_api_key ? 'success' : 'error'}`;
     document.getElementById('claudeStatus').textContent = settings.claude_api_key ? '✓ Claude API configured' : '✗ Claude API not configured';
-    
-    document.getElementById('yocoStatus').className = `status-box ${settings.yoco_api_key ? 'success' : 'error'}`;
-    document.getElementById('yocoStatus').textContent = settings.yoco_api_key ? '✓ Yoco API configured' : '✗ Yoco API not configured';
 }
 
 function loadLocalData() {

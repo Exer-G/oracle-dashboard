@@ -8,8 +8,8 @@ redirects = []
 [build]
 publish = "C:\\Users\\shuai\\Downloads\\oracle 7"
 publishOrigin = "config"
-base = "C:\\Users\\shuai\\Downloads\\oracle 7"
-functions = "C:\\Users\\shuai\\Downloads\\oracle 7\\netlify\\functions"
+base = "."
+functions = "netlify/functions"
 
   [build.environment]
 
