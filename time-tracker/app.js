@@ -139,7 +139,8 @@ async function initializeApp() {
     applyRoleViewport();
     await populateProjectDropdowns();
 
-    // Load data
+    // Sync any pending blocks from localStorage, then load data
+    await syncPendingBlocks();
     await loadTimeBlocks();
 
     // Setup timer callbacks
@@ -759,9 +760,66 @@ function storeBlockLocally(block, screenshotUrl) {
         const pending = JSON.parse(localStorage.getItem('tt_pending_blocks') || '[]');
         pending.push({ ...block, screenshotUrl, timestamp: Date.now() });
         localStorage.setItem('tt_pending_blocks', JSON.stringify(pending));
-        console.log('[Data] Block stored locally for later sync');
+        console.log('[Data] Block stored locally for later sync (' + pending.length + ' pending)');
     } catch (err) {
         console.error('[Data] Local storage error:', err);
+    }
+}
+
+async function syncPendingBlocks() {
+    if (!supabaseClient || !currentTeamMember) return;
+
+    const pending = JSON.parse(localStorage.getItem('tt_pending_blocks') || '[]');
+    if (!pending.length) return;
+
+    console.log('[Sync] Attempting to sync', pending.length, 'pending blocks...');
+    const failed = [];
+    let synced = 0;
+
+    for (const block of pending) {
+        try {
+            const projectName = (mergedProjects.length > 0 ? mergedProjects : TT_PROJECTS).find(p => p.id === block.projectId)?.name || block.projectName || '';
+            const { error } = await supabaseClient.from('tt_time_blocks').insert({
+                user_id: currentTeamMember.id,
+                user_name: currentTeamMember.name,
+                user_email: currentTeamMember.email,
+                session_id: block.sessionId || '',
+                project_id: block.projectId || '',
+                project_name: projectName,
+                block_number: block.blockNumber || 0,
+                start_time: block.startTime ? new Date(block.startTime).toISOString() : new Date(block.timestamp).toISOString(),
+                end_time: block.endTime ? new Date(block.endTime).toISOString() : new Date(block.timestamp + (block.durationSeconds || 600) * 1000).toISOString(),
+                duration_seconds: block.durationSeconds || 600,
+                screenshot_url: block.screenshotUrl || null,
+                activity_percent: block.activityPercent || 0,
+                activity_keyboard: block.activityKeyboard || 0,
+                activity_mouse: block.activityMouse || 0,
+                memo: block.memo || '',
+                hourly_rate: currentTeamMember.hourlyRate || 0,
+                currency: currentTeamMember.currency || 'USD',
+                status: 'pending'
+            });
+
+            if (error) {
+                console.warn('[Sync] Block failed:', error.message);
+                failed.push(block);
+            } else {
+                synced++;
+            }
+        } catch (err) {
+            console.warn('[Sync] Block exception:', err);
+            failed.push(block);
+        }
+    }
+
+    localStorage.setItem('tt_pending_blocks', JSON.stringify(failed));
+    if (synced > 0) {
+        console.log('[Sync] Synced', synced, 'pending blocks.', failed.length, 'remaining.');
+        toast('Synced ' + synced + ' pending time blocks', 'success');
+        await loadTimeBlocks();
+    }
+    if (failed.length > 0) {
+        console.warn('[Sync]', failed.length, 'blocks still pending (auth or RLS issue)');
     }
 }
 
