@@ -922,6 +922,11 @@ async function loadTrackerBlocks() {
 async function loadTrackerTeamMembers() {
     if (!supabaseClient) return;
 
+    // The source of truth for team members is data-loader.js (ORACLE_PRELOAD.team)
+    // We seed Supabase from it so the time tracker can read team data too.
+    const localTeam = window.ORACLE_PRELOAD?.team || [];
+    if (!localTeam.length) return;
+
     try {
         const { data, error } = await supabaseClient
             .from('tt_team_members')
@@ -933,20 +938,52 @@ async function loadTrackerTeamMembers() {
             return;
         }
 
-        if (data && data.length > 0) {
-            // Update ORACLE_PRELOAD.team with live Supabase data
-            window.ORACLE_PRELOAD.team = data.map(m => ({
+        // Check if Supabase data matches our known team (by email)
+        const localEmails = new Set(localTeam.map(m => m.email.toLowerCase()));
+        const supabaseHasOurTeam = data && data.length > 0 &&
+            data.some(m => localEmails.has(m.email.toLowerCase()));
+
+        if (supabaseHasOurTeam) {
+            // Supabase has valid data — merge any extra members added via tracker
+            const merged = [...localTeam];
+            for (const m of data) {
+                if (!localEmails.has(m.email.toLowerCase())) {
+                    merged.push({
+                        id: m.id, email: m.email, name: m.name, role: m.role,
+                        title: m.title || '', hourlyRate: parseFloat(m.hourly_rate) || 0,
+                        currency: m.currency || 'USD', status: m.status || 'active'
+                    });
+                }
+            }
+            window.ORACLE_PRELOAD.team = merged;
+            console.log('[Tracker Integration] Merged team:', merged.length, 'members');
+        } else {
+            // Supabase is empty or has stale/wrong data — seed it from local team
+            console.log('[Tracker Integration] Seeding tt_team_members with', localTeam.length, 'members');
+
+            // Delete any stale rows first
+            if (data && data.length > 0) {
+                await supabaseClient.from('tt_team_members').delete().neq('id', '');
+            }
+
+            // Insert our real team
+            const rows = localTeam.map(m => ({
                 id: m.id,
-                email: m.email,
+                user_id: currentUser?.id,
                 name: m.name,
+                email: m.email,
                 role: m.role,
-                title: m.title || '',
-                hourlyRate: parseFloat(m.hourly_rate) || 0,
+                status: m.status || 'active',
+                hourly_rate: m.hourlyRate,
                 currency: m.currency || 'USD',
-                status: m.status || 'active'
+                title: m.title || ''
             }));
-            console.log('[Tracker Integration] Synced', data.length, 'team members from tt_team_members');
+            const { error: seedErr } = await supabaseClient.from('tt_team_members').upsert(rows, { onConflict: 'id' });
+            if (seedErr) console.warn('[Tracker Integration] Seed error:', seedErr.message);
+            else console.log('[Tracker Integration] Seeded', rows.length, 'team members to Supabase');
         }
+
+        localStorage.setItem('oracle_team', JSON.stringify(window.ORACLE_PRELOAD.team));
     } catch (err) {
         console.error('[Tracker Integration] Team load error:', err);
     }
